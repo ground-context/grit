@@ -240,20 +240,20 @@ class GroundClient:
 
     def createLineageEdgeVersion(self,
             edge_id,
-            to_rich_version_start_id,
-            from_rich_version_start_id,
+            to_rich_version_id,
+            from_rich_version_id,
             reference=None,
             reference_parameters={},
             tags={},
             structure_version_id=-1,
             parent_ids=[]):
 
-        endpoint = "/versions/edges"
+        endpoint = "/versions/lineage_edges"
         body = self._getRichVersionJson(reference, reference_parameters, tags, structure_version_id, parent_ids)
 
-        body["edgeId"] = edge_id
-        body["toRichVersionStartId"] = to_rich_version_start_id
-        body["fromRichVersionStartId"] = from_rich_version_start_id
+        body["lineageEdgeId"] = edge_id
+        body["toRichVersionId"] = to_rich_version_id
+        body["fromRichVersionId"] = from_rich_version_id
 
         return self._makePostRequest(endpoint, body)
 
@@ -285,11 +285,11 @@ class GroundClient:
             structure_version_id=-1,
             parent_ids=[]):
 
-        endpoint = "/versions/graphs"
+        endpoint = "/versions/lineage_graphs"
         body = self._getRichVersionJson(reference, reference_parameters, tags, structure_version_id, parent_ids)
 
-        body["graphId"] = graph_id
-        body["lineageEVersionIds"] = lineage_edge_version_ids
+        body["lineageGraphId"] = graph_id
+        body["lineageEdgeVersionIds"] = lineage_edge_version_ids
 
         return self._makePostRequest(endpoint, body)
 
