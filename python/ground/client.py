@@ -14,6 +14,8 @@ class GroundClient:
 
         if return_json:
             try:
+                if request.status_code >= 400:
+                    return None
                 return request.json()
             except ValueError:
                 raise RuntimeError("Unexpected error: Could not decode JSON response from server. Response was " + str(response) + ".")
@@ -25,6 +27,8 @@ class GroundClient:
 
         if return_json:
             try:
+                if request.status_code >= 400:
+                    return None
                 return request.json()
             except ValueError:
                 raise RuntimeError("Unexpected error: Could not decode JSON response from server. Response was " + str(response) + ".")
