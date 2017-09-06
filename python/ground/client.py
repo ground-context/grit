@@ -31,7 +31,7 @@ class GroundClient:
         else:
             pass
 
-    def _getRichVersionJson(reference, reference_parameters, tags, structure_version_id, parent_ids):
+    def _getRichVersionJson(self, reference, reference_parameters, tags, structure_version_id, parent_ids):
         body = {}
 
         if reference:
