@@ -49,6 +49,8 @@ class GroundClient:
         if parent_ids:
             body["parentIds"] = parent_ids
 
+        return body
+
     def _createItem(self, item_type, source_key, name, tags):
         endpoint = "/" + item_type
         body = {"sourceKey": source_key, "name": name}
