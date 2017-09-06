@@ -74,7 +74,7 @@ class GroundClient:
     EDGE METHODS
     '''
 
-    def createEdge(source_key, name, from_node_id, to_node_id, tags={}):
+    def createEdge(self, source_key, name, from_node_id, to_node_id, tags={}):
         endpoint = "/edges"
         body = {"sourceKey": source_key, "name": name, "fromNodeId": from_node_id, "toNodeId": to_node_id}
 
@@ -83,7 +83,8 @@ class GroundClient:
 
         return self._makePostRequest(endpoint, body)
 
-    def createEdgeVersion(edge_id,
+    def createEdgeVersion(self,
+            edge_id,
             to_node_version_start_id,
             from_node_version_start_id,
             to_node_version_end_id=-1,
@@ -125,10 +126,11 @@ class GroundClient:
     GRAPH METHODS
     '''
 
-    def createGraph(source_key, name, tags):
+    def createGraph(self, source_key, name, tags={}):
         return self._createItem("graphs", source_key, name, tags);
 
-    def createGraphVersion(graph_id,
+    def createGraphVersion(self,
+            graph_id,
             edge_version_ids,
             reference=None,
             reference_parameters={},
@@ -160,10 +162,11 @@ class GroundClient:
     NODE METHODS
     '''
 
-    def createNode(source_key, name, tags):
+    def createNode(self, source_key, name, tags={}):
         return self._createItem("nodes", source_key, name, tags);
 
-    def createNodeVersion(node_id,
+    def createNodeVersion(self,
+            node_id,
             reference=None,
             reference_parameters={},
             tags={},
@@ -196,10 +199,11 @@ class GroundClient:
     STRUCTURE METHODS
     '''
 
-    def createStructure(source_key, name, tags):
+    def createStructure(self, source_key, name, tags={}):
         return self._createItem("structures", source_key, name, tags);
 
-    def createStructureVersion(structure_id,
+    def createStructureVersion(self,
+            structure_id,
             attributes,
             parent_ids=[]):
 
@@ -225,10 +229,11 @@ class GroundClient:
     LINEAGE EDGE METHODS
     '''
 
-    def createLineageEdge(source_key, name, tags):
+    def createLineageEdge(self, source_key, name, tags={}):
         return self._createItem("lineage_edges", source_key, name, tags);
 
-    def createLineageEdgeVersion(edge_id,
+    def createLineageEdgeVersion(self,
+            edge_id,
             to_rich_version_start_id,
             from_rich_version_start_id,
             reference=None,
@@ -262,10 +267,11 @@ class GroundClient:
     LINEAGE GRAPH METHODS
     '''
 
-    def createLineageGraph(source_key, name, tags):
+    def createLineageGraph(self, source_key, name, tags={}):
         return self._createItem("lineage_graphs", source_key, name, tags);
 
-    def createLineageGraphVersion(lineage_graph_id,
+    def createLineageGraphVersion(self,
+            lineage_graph_id,
             lineage_edge_version_ids,
             reference=None,
             reference_parameters={},
