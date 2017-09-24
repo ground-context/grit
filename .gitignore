@@ -1,4 +1,5 @@
 python/build
 python/dist
 python/ground_client.egg-info
+__pycache__
 
