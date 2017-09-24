@@ -1,4 +1,4 @@
-import tag.Tag as Tag
+from .tag import Tag
 
 
 class Item:
@@ -8,7 +8,8 @@ class Item:
         self._tags = json_payload['tags'] or {}
 
         for key, value in list(self._tags.items()):
-            self._tag[key] = Tag(value)
+            if not isinstance(value, Tag):
+                self._tag[key] = Tag(value)
 
     def get_id(self):
         return self._id
