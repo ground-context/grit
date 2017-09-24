@@ -1,30 +1,29 @@
-from sets import Set
-
 class VersionHistoryDag:
 
-    def __init__(item_id, edges):
+    def __init__(self, item_id, edges):
         self._item_id = item_id
-        # self._edge_ids = edges.stream().map(VersionSuccessor::getId).collect(Collectors.toList())
+        self._edge_ids = [edge.get_id() for edge in edges]
         self._parent_child_map = {}
-        # edges.forEach(edge -> self.add_to_parent_child_map(edge.getFromId(), edge.getToId()))
+        for edge in edges:
+            self.add_to_parent_child_map(edge.get_from_id(), edge.get_to_id())
 
-    def get_item_id():
+    def get_item_id(self):
         return self._item_id
 
-    def get_edge_ids():
+    def get_edge_ids(self):
         return self._edge_ids
 
-    def check_item_in_dag(id):
+    def check_item_in_dag(self, id):
         return id in self._parent_child_map.keys() or id in self.get_leaves()
 
-    def add_edge(parent_id, child_id, successor_id):
+    def add_edge(self, parent_id, child_id, successor_id):
         self._edge_ids.add(successor_id)
         self.add_to_parent_child_map(parent_id, child_id)
 
-    def get_parent(child_id):
+    def get_parent(self, child_id):
         return [key for key in self._parent_child_map.keys() if child_id in self._parent_child_map[key]]
 
-    def get_parent_child_pairs():
+    def get_parent_child_pairs(self):
         result = {}
         for parent in self._parent_child_map.keys():
             children = self._parent_child_map[parent]
@@ -32,12 +31,10 @@ class VersionHistoryDag:
                 result[parent] = child
         return result
 
-    def get_leaves():
-        leaves = Set(self._parent_child_map.values())
-        leaves = leaves.difference(self._parent_child_map.keys())
-        return leaves
+    def get_leaves(self):
+        return set(self._parent_child_map.values()) - set(self._parent_child_map.keys())
 
-    def add_to_parent_child_map(parent, child):
+    def add_to_parent_child_map(self, parent, child):
         if parent not in self._parent_child_map.keys():
             self._parent_child_map[parent] = []
         self._parent_child_map[parent].append(child)
