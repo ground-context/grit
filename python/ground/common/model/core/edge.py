@@ -4,18 +4,21 @@ from ..version.item import Item
 class Edge(Item):
 
     def __init__(self, json_payload):
-        super(id, tags)
-        self._name = json_payload['name']
-        self._from_node_id = json_payload['fromNodeId']
-        self._to_node_id = json_payload['toNodeId']
-        self._source_key = json_payload['sourceKey']
+        super().__init__(json_payload)
+        self._name = json_payload.get('name', '')
+        self._from_node_id = json_payload.get('fromNodeId', 0)
+        self._to_node_id = json_payload.get('toNodeId', 0)
+        self._source_key = json_payload.get('sourceKey', '')
 
-    # def __init__(self, id, other):
-    #     super(id, other.getTags())
-    #     self._name = other.get_name()
-    #     self._from_node_id = other.get_from_node_id()
-    #     self._to_node_id = other.get_to_node_id()
-    #     self._source_key = other.get_source_key()
+    @classmethod
+    def from_edge(cls, _id, other_edge):
+        return cls({
+            'id': _id,
+            'tags': other.get_tags(),
+            'fromNodeId': other_edge.get_from_node_id(),
+            'toNodeId': other_edge.get_to_node_id(),
+            'sourceKey': other_edge.get_source_key(),
+        })
 
     def get_name(self):
         return self._name

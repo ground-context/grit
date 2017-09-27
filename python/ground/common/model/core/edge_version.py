@@ -4,29 +4,45 @@ from ..rich_version import RichVersion
 class EdgeVersion(RichVersion):
 
     def __init__(self, json_payload):
-        super(id, tags, structureVersionId, reference, referenceParameters)
-        self._edge_id = edgeId
-        self._from_node_version_start_id = json_payload['fromNodeVersionStartId']
-        if json_payload['fromNodeVersionEndId'] <= 0:
+        super().__init__(json_payload)
+
+        self._edge_id = json_payload.get('edgeId')
+
+        self._from_node_version_start_id = json_payload.get('fromNodeVersionStartId', 0)
+
+        if json_payload.get('fromNodeVersionEndId', 0) <= 0:
             self._from_node_version_end_id = -1
         else:
-            self._from_node_version_end_id = json_payload['fromNodeVersionEndId']
-        self._to_node_version_start_id = json_payload['toNodeVersionStartId']
-        if json_payload['toNodeVersionEndId'] <= 0:
+            self._from_node_version_end_id = json_payload.get('fromNodeVersionEndId')
+
+        self._to_node_version_start_id = json_payload.get('toNodeVersionStartId', 0)
+
+        if json_payload.get('toNodeVersionEndId', 0) <= 0:
             self._to_node_version_end_id = -1
         else:
-            self._to_node_version_end_id = json_payload['toNodeVersionEndId']
+            self._to_node_version_end_id = json_payload.get('toNodeVersionEndId')
 
-    # def __init__(self, id, other):
-    #     self(id, other, other)
+    @classmethod
+    def from_edge_version(cls, _id, other_edge_version):
+        return EdgeVersion.from_edge_version_and_rich_version(
+            _id, other_edge_version, other_edge_version
+        )
 
-    # def __init__(self, long id, RichVersion otherRichVersion, EdgeVersion other):
-    #     super(id, otherRichVersion)
-    #     self._edge_id = other.edgeId
-    #     self._from_node_version_start_id = other.fromNodeVersionStartId
-    #     self._from_node_version_end_id = other.fromNodeVersionEndId
-    #     self._to_node_version_start_id = other.toNodeVersionStartId
-    #     self._to_node_version_end_id = other.toNodeVersionEndId
+    @classmethod
+    def from_edge_version_and_rich_version(cls, _id, other_rich_version, other_edge_version):
+        return cls({
+            'id': _id,
+            'tags': other.get_tags(),
+            'structureVersionId': other_rich_version.get_structure_version_id(),
+            'reference': other_rich_version.get_reference(),
+            'referenceParameters': other_rich_version.get_parameters(),
+            'edgeId': other_edge_version.get_edge_id(),
+            'fromNodeVersionStartId': other_edge_version.get_from_node_version_start_id(),
+            'fromNodeVersionEndId': other_edge_version.get_from_node_version_end_id(),
+            'toNodeVersionStartId': other_edge_version.get_to_node_version_start_id(),
+            'toNodeVersionEndId': other_edge_version.get_to_node_version_end_id(),
+        })
+
 
     def get_edge_id(self):
         return self._edge_id
@@ -52,4 +68,4 @@ class EdgeVersion(RichVersion):
             and self._to_node_version_start_id == otherEdgeVersion._to_node_version_start_id
             and self._to_node_version_end_id == otherEdgeVersion._to_node_version_end_id
             and self.get_id() == otherEdgeVersion.get_id()
-            and super(self, RichVersion) == super(other, RichVersion))
+            and super().__eq__(other)

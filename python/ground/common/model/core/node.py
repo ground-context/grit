@@ -6,19 +6,17 @@ class Node(Item):
     def __init__(self, json_payload):
         super().__init__(json_payload)
 
-        self._name = json_payload['name']
-        self._source_key = json_payload['sourceKey']
+        self._name = json_payload.get('name', '')
+        self._source_key = json_payload.get('sourceKey', '')
 
     @classmethod
     def from_node(cls, node_id, other_node):
-        json = {
+        return cls({
             'id': node_id,
             'tags': other_node.get_tags(),
             'name': other_node.get_name(),
             'sourceKey': other_node.get_source_key(),
-        }
-        node = cls(json)
-        return node
+        })
 
     def get_item_id(self):
         return self.get_id()

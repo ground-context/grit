@@ -2,29 +2,39 @@ from ..version.rich_version import RichVersion
 
 
 class LineageEdgeVersion(RichVersion):
-    
+
     def __init__(self, json_payload):
-        super(id, tags, json_payload['structureVersionId'], json_payload['reference'], json_payload['referenceParameters']);
-        self._lineage_edge_id = json_payload['lineageEdgeId'];
-        self._from_id = json_payload['fromId'];
-        self._to_id = json_payload['toId'];
+        super().__init__(json_payload)
+        self._lineage_edge_id = json_payload.get('lineageEdgeId', 0)
+        self._from_id = json_payload.get('fromId', 0)
+        self._to_id = json_payload.get('toId', 0)
 
-    def __init__(self, id, other):
-        self(id, other, other);
+    @classmethod
+    def from_lineage_version(cls, _id, other_lineage_version):
+        return EdgeVersion.from_edge_version_and_rich_version(
+            _id, other_lineage_version, other_lineage_version
+        )
 
-    def __init__(self, id, otherRichVersion, other):
-        super(self, RichVersion).__init__(id, otherRichVersion);
-        self._lineage_edge_id = other.lineageEdgeId;
-        self._from_id = other.fromId;
-        self._to_id = other.toId;
+    @classmethod
+    def from_lineage_version_and_rich_version(cls, _id, other_rich_version, other_lineage_version):
+        return cls({
+            'id': _id,
+            'tags': other.get_tags(),
+            'structureVersionId': other_rich_version.get_structure_version_id(),
+            'reference': other_rich_version.get_reference(),
+            'referenceParameters': other_rich_version.get_parameters(),
+            'lineageEdgeId': other_lineage_version.get_lineage_edge_id(),
+            'fromId': other_lineage_version.get_from_id(),
+            'toId': other_lineage_version.get_to_id(),
+        })
 
-    def getLineageEdgeId(self):
+    def get_lineage_edge_id(self):
         return self._lineage_edge_id;
 
-    def getFromId(self):
+    def get_from_id(self):
         return self._from_id;
 
-    def getToId(self):
+    def get_to_id(self):
         return self._to_id;
 
     def __eq__(self, other):
@@ -34,4 +44,4 @@ class LineageEdgeVersion(RichVersion):
             and self._from_id == other._from_id
             and self._to_id == other._to_id
             and self.get_id() == other.get_id()
-            and super(self, RichVersion) == super(other, RichVersion))
+            and super().__eq__(other)

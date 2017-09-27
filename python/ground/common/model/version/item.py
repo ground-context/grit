@@ -4,8 +4,8 @@ from .tag import Tag
 class Item:
 
     def __init__(self, json_payload):
-        self._id   = json_payload['id']
-        self._tags = json_payload['tags'] or {}
+        self._id   = json_payload.get('id') or 0
+        self._tags = json_payload.get('tags') or {}
 
         for key, value in list(self._tags.items()):
             if not isinstance(value, Tag):

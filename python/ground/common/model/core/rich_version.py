@@ -4,33 +4,34 @@ from ..version.version import Version
 class RichVersion(Version):
 
     def __init__(self, json_payload):
-        super(id)
-        if 'tags' not in json_payload.keys():
-            self._tags = {}
-        else:
-            self._tags = json_payload['tags']
+        super().__init__(json_payload['id'])
 
-        if 'structureVersionId' not in json_payload.keys() or json_payload['structureVersionId'] <= 0:
+        self._tags = json_payload.get('tags', {}) or {}
+
+        svid = json_payload.get('structureVersionId')
+        if svid is None or svid <= 0:
             self._structure_version_id = -1
         else:
-            self._structure_version_id = json_payload['structureVersionId']
+            self._structure_version_id = svid
 
-        if 'reference' not in json_payload.keys() or json_payload['reference'] == "null":
-            self._reference = None
+        reference = json_payload.get('reference')
+        if reference is None or reference == "null":
+            self._reference = reference
         else:
-            self._reference = json_payload['reference']
+            self._reference = reference
 
-        if 'referenceParameters' not in json_payload.keys():
-            self._parameters = {}
-        else:
-            self._parameters = json_payload['referenceParameters']
+        self._parameters = json_payload.get('referenceParameters', {}) or {}
 
-    # def __init__(self, id, other):
-    #     super(id)
-    #     self._tags = other.tags
-    #     self._structure_version_id = other.structureVersionId
-    #     self._reference = other.reference
-    #     self._parameters = other.parameters
+
+    @classmethod
+    def from_rich_version(cls, _id, other_rich_version):
+        return cls({
+            'id': _id,
+            'tags': other.get_tags(),
+            'structureVersionId': other_rich_version.get_structure_version_id(),
+            'reference': other_rich_version.get_reference(),
+            'referenceParameters': other_rich_version.get_parameters(),
+        })
 
     def get_tags(self):
         return self._tags
@@ -44,7 +45,8 @@ class RichVersion(Version):
     def get_parameters(self):
         return self._parameters
 
-    # NOTE: for get_tags() and _parameters, even if lists contain same elements but different ordering, they are still not equal
+    # NOTE: for get_tags() and _parameters, even if lists contain same elements
+    # but different ordering, they are still not equal
     def __eq__(self, other):
         if not isinstance(other, RichVersion):
             return False

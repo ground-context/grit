@@ -4,20 +4,28 @@ from ..version.rich_version import RichVersion
 class LineageGraphVersion(RichVersion):
 
     def __init__(self, json_payload):
-        super(self, RichVersion).__init__(json_payload['id'], json_payload['tags'], json_payload['structureVersionId'], json_payload['reference'], json_payload['referenceParameters'])
-        self._lineage_graph_id = json_payload['lineageGraphId']
-        if 'lineageEdgeVersionIds' not in json_payload.keys():
-            self._lineage_edge_version_ids = []
-        else:
-            self._lineage_edge_version_ids = json_payload['lineageEdgeVersionIds']
+        super().__init__(json_payload)
+        self._lineage_graph_id = json_payload.get('lineageGraphId', 0)
+        self._lineage_edge_version_ids = json_payload.get('lineageEdgeVersionIds', [])
 
-    # def __init__(self, id, other):
-    #     self(id, other, other)
+    @classmethod
+    def from_lineage_graph_version(cls, _id, other_lineage_graph_version):
+        return LineageGraphVersion.from_lineage_graph_version_and_rich_version(
+            _id, other_lineage_graph_version, other_lineage_graph_version
+        )
 
-    # def __init__(self, id, otherRichVersion, other):
-    #     super(self, RichVersion).__init__(id, other)
-    #     self._lineage_graph_id = other.lineageGraphId
-    #     self._lineage_edge_version_ids = other.lineageEdgeVersionIds
+    @classmethod
+    def from_lineage_graph_version_and_rich_version(
+                cls, _id, other_rich_version, other_lineage_graph_version):
+        return cls({
+            'id': _id,
+            'tags': other.get_tags(),
+            'structureVersionId': other_rich_version.get_structure_version_id(),
+            'reference': other_rich_version.get_reference(),
+            'referenceParameters': other_rich_version.get_parameters(),
+            'lineageGraphId': other_lineage_graph_version.get_lineage_graph_id(),
+            'lineageEdgeVersionIds', other_lineage_graph_version.get_lineage_edge_version_ids(),
+        })
 
     def get_lineage_graph_id(self):
         return self._lineage_graph_id

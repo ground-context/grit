@@ -14,14 +14,14 @@ class VersionHistoryDag:
         return self._edge_ids
 
     def check_item_in_dag(self, id):
-        return id in self._parent_child_map.keys() or id in self.get_leaves()
+        return id in self._parent_child_map or id in self.get_leaves()
 
     def add_edge(self, parent_id, child_id, successor_id):
         self._edge_ids.add(successor_id)
         self.add_to_parent_child_map(parent_id, child_id)
 
     def get_parent(self, child_id):
-        return [key for key in self._parent_child_map.keys() if child_id in self._parent_child_map[key]]
+        return [key for key in self._parent_child_map if child_id in self._parent_child_map[key]]
 
     def get_parent_child_pairs(self):
         result = {}
@@ -35,6 +35,6 @@ class VersionHistoryDag:
         return set(self._parent_child_map.values()) - set(self._parent_child_map.keys())
 
     def add_to_parent_child_map(self, parent, child):
-        if parent not in self._parent_child_map.keys():
+        if parent not in self._parent_child_map:
             self._parent_child_map[parent] = []
         self._parent_child_map[parent].append(child)

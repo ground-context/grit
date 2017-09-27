@@ -4,26 +4,30 @@ from ..version.item import Item
 class LineageEdge(Item):
 
     def __init__(self, json_payload):
-        super(id, json_payload['tags'])
-        self._name = json_payload['name']
-        self._sourceKey = json_payload['sourceKey']
+        super().__init__(json_payload)
+        self._name = json_payload.get('name', '')
+        self._source_key = json_payload.get('sourceKey', '')
 
-    # def __init__(id, other):
-    #     super(id, other.get_tags())
-    #     self._name = other._name
-    #     self._sourceKey = other._sourceKey
+    @classmethod
+    def from_lineage_edge(cls, _id, other_lineage_edge):
+        return cls({
+            'id': _id,
+            'tags': other_lineage_edge.get_tags(),
+            'name': other_lineage_edge.get_name(),
+            'sourceKey': other_lineage_edge.get_source_key(),
+        })
 
     def get_name(self):
         return self._name
 
     def get_source_key(self):
-        return self._sourceKey
+        return self._source_key
 
     # NOTE: for get_tags(), even if lists contain same elements but different ordering, they are still not equal
     def __eq__(self, other):
-        if not isinstance(other, RichVersion):
+        if not isinstance(other, LineageEdge):
             return False
-        return (self._name == other.name
+        return (self.get_name() == other.get_name()
             and self.get_id() == other.get_id()
-            and self._sourceKey. == other.sourceKey
+            and self.get_source_key() == other.get_source_key()
             and self.get_tags() == other.get_tags())

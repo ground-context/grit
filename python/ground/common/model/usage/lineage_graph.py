@@ -4,14 +4,18 @@ from ..version.item import Item
 class LineageGraph(Item):
 
     def __init__(self, json_payload):
-        super(self, Item).__init__(json_payload['id'], json_payload['tags'])
-        self._name = json_payload['name']
-        self._source_key = json_payload['sourceKey']
+        super().__init__(json_payload)
+        self._name = json_payload.get('name', '')
+        self._source_key = json_payload.get('sourceKey', '')
 
-    # def __init__(self, id, other):
-    #     super(id, other.get_tags())
-    #     self._name = other.name
-    #     self._source_key = other.sourceKey
+    @classmethod
+    def from_lineage_graph(cls, _id, other_lineage_graph):
+        return cls({
+            'id': _id,
+            'tags': other_lineage_graph.get_tags(),
+            'name': other_lineage_graph.get_name(),
+            'sourceKey': other_lineage_graph.get_source_key(),
+        })
 
     def get_name(self):
         return self._name
@@ -23,7 +27,7 @@ class LineageGraph(Item):
     def __eq__(self, other):
         if not isinstance(other, LineageGraph):
             return False
-        return (self._name == other._name
+        return (self.get_name() == other.get_name()
             and self.get_id() == other.get_id()
-            and self._source_key == other._source_key
+            and self.get_source_key() == other.get_source_key()
             and self.get_tags() == other.get_tags())

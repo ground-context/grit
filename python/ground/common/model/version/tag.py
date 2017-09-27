@@ -1,9 +1,9 @@
 class Tag:
 
     def __init__(self, json_payload):
-        self._id  = json_payload['id']
-        self._key = json_payload['key']
-        self._val = json_payload['value']
+        self._id  = json_payload.get('id')
+        self._key = json_payload.get('key')
+        self._val = json_payload.get('value')
 
     def get_id(self):
         return self._id
