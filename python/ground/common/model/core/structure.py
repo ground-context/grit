@@ -1,7 +1,7 @@
 from ..version.item import Item
 
 
-class Node(Item):
+class Structure(Item):
 
     def __init__(self, json_payload):
         super().__init__(json_payload)
@@ -10,12 +10,12 @@ class Node(Item):
         self._source_key = json_payload.get('sourceKey', '')
 
     @classmethod
-    def from_node(cls, node_id, other_node):
+    def from_structure(cls, structure_id, other_structure):
         return cls({
-            'id': node_id,
-            'tags': other_node.get_tags(),
-            'name': other_node.get_name(),
-            'sourceKey': other_node.get_source_key(),
+            'id': structure_id,
+            'tags': other_structure.get_tags(),
+            'name': other_structure.get_name(),
+            'sourceKey': other_structure.get_source_key(),
         })
 
     def get_item_id(self):

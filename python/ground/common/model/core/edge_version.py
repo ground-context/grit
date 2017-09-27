@@ -62,10 +62,10 @@ class EdgeVersion(RichVersion):
     def __eq__(self, other):
         if not isinstance(other, EdgeVersion):
             return False
-        return (self._edge_id == otherEdgeVersion._edge_id
-            and self._from_node_version_start_id == otherEdgeVersion._from_node_version_start_id
-            and self._from_node_version_end_id == otherEdgeVersion._from_node_version_end_id
-            and self._to_node_version_start_id == otherEdgeVersion._to_node_version_start_id
-            and self._to_node_version_end_id == otherEdgeVersion._to_node_version_end_id
-            and self.get_id() == otherEdgeVersion.get_id()
+        return (self._edge_id == other._edge_id
+            and self._from_node_version_start_id == other._from_node_version_start_id
+            and self._from_node_version_end_id == other._from_node_version_end_id
+            and self._to_node_version_start_id == other._to_node_version_start_id
+            and self._to_node_version_end_id == other._to_node_version_end_id
+            and self.get_id() == other.get_id()
             and super().__eq__(other)
