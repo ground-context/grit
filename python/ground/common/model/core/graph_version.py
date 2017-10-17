@@ -1,4 +1,4 @@
-from ..rich_version import RichVersion
+from .rich_version import RichVersion
 
 
 class GraphVersion(RichVersion):
@@ -19,7 +19,7 @@ class GraphVersion(RichVersion):
     def from_graph_version_and_rich_version(cls, _id, other_rich_version, other_graph_version):
         return cls({
             'id': _id,
-            'tags': other.get_tags(),
+            'tags': other_rich_version.get_tags(),
             'structureVersionId': other_rich_version.get_structure_version_id(),
             'reference': other_rich_version.get_reference(),
             'referenceParameters': other_rich_version.get_parameters(),
@@ -34,8 +34,9 @@ class GraphVersion(RichVersion):
         return self._edge_version_ids
 
     def __eq__(self, other):
-        if not isinstance(other, GraphVersion):
-            return False
-        return (self._graph_id == other._graph_id
+        return (
+            isinstance(other, GraphVersion)
+            and self._graph_id == other._graph_id
             and self.get_edge_version_ids() == other.get_edge_version_ids()
             and super().__eq__(other)
+        )

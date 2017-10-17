@@ -1,5 +1,5 @@
 class VersionSuccessor:
-    
+
     def __init__(self, id, from_id, to_id):
         self._id = id
         self._from_id = from_id

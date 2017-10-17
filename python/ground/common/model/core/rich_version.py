@@ -27,7 +27,7 @@ class RichVersion(Version):
     def from_rich_version(cls, _id, other_rich_version):
         return cls({
             'id': _id,
-            'tags': other.get_tags(),
+            'tags': other_rich_version.get_tags(),
             'structureVersionId': other_rich_version.get_structure_version_id(),
             'reference': other_rich_version.get_reference(),
             'referenceParameters': other_rich_version.get_parameters(),
@@ -45,13 +45,12 @@ class RichVersion(Version):
     def get_parameters(self):
         return self._parameters
 
-    # NOTE: for get_tags() and _parameters, even if lists contain same elements
-    # but different ordering, they are still not equal
     def __eq__(self, other):
-        if not isinstance(other, RichVersion):
-            return False
-        return (self.get_id() == other.get_id()
+        return (
+            isinstance(other, RichVersion)
+            and self.get_id() == other.get_id()
             and self._tags == other._tags
             and self._structure_version_id == other._structure_version_id
             and self._reference == other._reference
-            and self._parameters == other._parameters)
+            and self._parameters == other._parameters
+        )

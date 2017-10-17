@@ -1,4 +1,4 @@
-from ..version.rich_version import RichVersion
+from ..core.rich_version import RichVersion
 
 
 class LineageGraphVersion(RichVersion):
@@ -19,12 +19,12 @@ class LineageGraphVersion(RichVersion):
                 cls, _id, other_rich_version, other_lineage_graph_version):
         return cls({
             'id': _id,
-            'tags': other.get_tags(),
+            'tags': other_rich_version.get_tags(),
             'structureVersionId': other_rich_version.get_structure_version_id(),
             'reference': other_rich_version.get_reference(),
             'referenceParameters': other_rich_version.get_parameters(),
             'lineageGraphId': other_lineage_graph_version.get_lineage_graph_id(),
-            'lineageEdgeVersionIds', other_lineage_graph_version.get_lineage_edge_version_ids(),
+            'lineageEdgeVersionIds': other_lineage_graph_version.get_lineage_edge_version_ids(),
         })
 
     def get_lineage_graph_id(self):
@@ -33,10 +33,10 @@ class LineageGraphVersion(RichVersion):
     def get_lineage_edge_version_ids(self):
         return self._lineage_edge_version_ids
 
-    # NOTE: for _lineage_edge_version_ids, even if lists contain same elements but different ordering, they are still not equal
     def __eq__(self, other):
-        if not isinstance(other, LineageGraphVersion):
-            return False
-        return (self._lineage_graph_id == otherLineageGraphVersion._lineage_graph_id
-            and self._lineage_edge_version_ids == otherLineageGraphVersion._lineage_edge_version_ids
-            and super(self, RichVersion) == super(other, RichVersion))
+        return (
+            isinstance(other, LineageGraphVersion)
+            and self._lineage_graph_id == other._lineage_graph_id
+            and self._lineage_edge_version_ids == other._lineage_edge_version_ids
+            and super().__eq__(other)
+        )

@@ -23,11 +23,11 @@ class LineageGraph(Item):
     def get_source_key(self):
         return self._source_key
 
-    # NOTE: for get_tags(), even if lists contain same elements but different ordering, they are still not equal
     def __eq__(self, other):
-        if not isinstance(other, LineageGraph):
-            return False
-        return (self.get_name() == other.get_name()
+        return (
+            isinstance(other, LineageGraph)
+            and self.get_name() == other.get_name()
             and self.get_id() == other.get_id()
             and self.get_source_key() == other.get_source_key()
-            and self.get_tags() == other.get_tags())
+            and self.get_tags() == other.get_tags()
+        )

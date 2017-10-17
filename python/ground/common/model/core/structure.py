@@ -29,7 +29,7 @@ class Structure(Item):
 
     def __eq__(self, other):
         return (
-            isinstance(other, Node)
+            isinstance(other, Structure)
             and self.get_name() == other.get_name()
             and self.get_source_key() == other.get_source_key()
             and self.get_item_id() == other._id

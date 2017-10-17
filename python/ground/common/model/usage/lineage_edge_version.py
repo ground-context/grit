@@ -1,4 +1,4 @@
-from ..version.rich_version import RichVersion
+from ..core.rich_version import RichVersion
 
 
 class LineageEdgeVersion(RichVersion):
@@ -11,7 +11,7 @@ class LineageEdgeVersion(RichVersion):
 
     @classmethod
     def from_lineage_version(cls, _id, other_lineage_version):
-        return EdgeVersion.from_edge_version_and_rich_version(
+        return LineageEdgeVersion.from_lineage_version_and_rich_version(
             _id, other_lineage_version, other_lineage_version
         )
 
@@ -19,7 +19,7 @@ class LineageEdgeVersion(RichVersion):
     def from_lineage_version_and_rich_version(cls, _id, other_rich_version, other_lineage_version):
         return cls({
             'id': _id,
-            'tags': other.get_tags(),
+            'tags': other_rich_version.get_tags(),
             'structureVersionId': other_rich_version.get_structure_version_id(),
             'reference': other_rich_version.get_reference(),
             'referenceParameters': other_rich_version.get_parameters(),
@@ -29,19 +29,20 @@ class LineageEdgeVersion(RichVersion):
         })
 
     def get_lineage_edge_id(self):
-        return self._lineage_edge_id;
+        return self._lineage_edge_id
 
     def get_from_id(self):
-        return self._from_id;
+        return self._from_id
 
     def get_to_id(self):
-        return self._to_id;
+        return self._to_id
 
     def __eq__(self, other):
-        if not isinstance(other, LineageEdgeVersion):
-            return False;
-        return (self._lineage_edge_id == other._lineage_edge_id
+        return (
+            isinstance(other, LineageEdgeVersion)
+            and self._lineage_edge_id == other._lineage_edge_id
             and self._from_id == other._from_id
             and self._to_id == other._to_id
             and self.get_id() == other.get_id()
             and super().__eq__(other)
+        )

@@ -16,8 +16,8 @@ class Tag:
 
     def __eq__(self, other):
         return (
-            isinstance(other, Tag) and
-            self._id == other._id and
-            self._key == other._key and
-            self._val == other._val
+            isinstance(other, Tag)
+            and self._id == other._id
+            and self._key == other._key
+            and self._val == other._val
         )

@@ -9,7 +9,7 @@ class Item:
 
         for key, value in list(self._tags.items()):
             if not isinstance(value, Tag):
-                self._tag[key] = Tag(value)
+                self._tags[key] = Tag(value)
 
     def get_id(self):
         return self._id

@@ -1,4 +1,4 @@
-from ..rich_version import RichVersion
+from .rich_version import RichVersion
 
 
 class NodeVersion(RichVersion):
@@ -18,7 +18,7 @@ class NodeVersion(RichVersion):
     def from_node_version_and_rich_version(cls, _id, other_rich_version, other_node_version):
         return cls({
             'id': _id,
-            'tags': other.get_tags(),
+            'tags': other_rich_version.get_tags(),
             'structureVersionId': other_rich_version.get_structure_version_id(),
             'reference': other_rich_version.get_reference(),
             'referenceParameters': other_rich_version.get_parameters(),
@@ -29,7 +29,8 @@ class NodeVersion(RichVersion):
         return self._node_id
 
     def __eq__(self, other):
-        if not isinstance(other, NodeVersion):
-            return False
-        return (self._node_id == other._node_id
+        return (
+            isinstance(other, NodeVersion)
+            and self._node_id == other._node_id
             and super().__eq__(other)
+        )

@@ -1,4 +1,4 @@
-from ..rich_version import RichVersion
+from .rich_version import RichVersion
 
 
 class EdgeVersion(RichVersion):
@@ -32,7 +32,7 @@ class EdgeVersion(RichVersion):
     def from_edge_version_and_rich_version(cls, _id, other_rich_version, other_edge_version):
         return cls({
             'id': _id,
-            'tags': other.get_tags(),
+            'tags': other_rich_version.get_tags(),
             'structureVersionId': other_rich_version.get_structure_version_id(),
             'reference': other_rich_version.get_reference(),
             'referenceParameters': other_rich_version.get_parameters(),
@@ -42,7 +42,6 @@ class EdgeVersion(RichVersion):
             'toNodeVersionStartId': other_edge_version.get_to_node_version_start_id(),
             'toNodeVersionEndId': other_edge_version.get_to_node_version_end_id(),
         })
-
 
     def get_edge_id(self):
         return self._edge_id
@@ -68,4 +67,4 @@ class EdgeVersion(RichVersion):
             and self._to_node_version_start_id == other._to_node_version_start_id
             and self._to_node_version_end_id == other._to_node_version_end_id
             and self.get_id() == other.get_id()
-            and super().__eq__(other)
+            and super().__eq__(other))

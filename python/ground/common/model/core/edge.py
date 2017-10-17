@@ -14,7 +14,7 @@ class Edge(Item):
     def from_edge(cls, _id, other_edge):
         return cls({
             'id': _id,
-            'tags': other.get_tags(),
+            'tags': other_edge.get_tags(),
             'fromNodeId': other_edge.get_from_node_id(),
             'toNodeId': other_edge.get_to_node_id(),
             'sourceKey': other_edge.get_source_key(),
@@ -32,13 +32,13 @@ class Edge(Item):
     def get_source_key(self):
         return self._source_key
 
-    # NOTE: for get_tags(), even if lists contain same elements but different ordering, they are still not equal
     def __eq__(self, other):
-        if not isinstance(other, Edge):
-            return False
-        return (self._name == other._name
+        return (
+            isinstance(other, Edge)
+            and self._name == other._name
             and self._source_key == other._source_key
             and self.get_id() == other.get_id()
             and self._from_node_id == other._from_node_id
             and self._to_node_id == other._to_node_id
-            and self.get_tags() == other.get_tags())
+            and self.get_tags() == other.get_tags()
+        )
