@@ -83,7 +83,9 @@ class GroundClient:
     EDGE METHODS
     '''
 
-    def create_edge(self, source_key, name, from_node_id, to_node_id, tags={}):
+    def create_edge(self, source_key, name, from_node_id, to_node_id, tags=None):
+        if tags is None:
+            tags = {}
         endpoint = "/edges"
         body = {"sourceKey": source_key, "name": name, "fromNodeId": from_node_id, "toNodeId": to_node_id}
 
@@ -103,10 +105,17 @@ class GroundClient:
                             to_node_version_end_id=-1,
                             from_node_version_end_id=-1,
                             reference=None,
-                            reference_parameters={},
-                            tags={},
+                            reference_parameters=None,
+                            tags=None,
                             structure_version_id=-1,
-                            parent_ids=[]):
+                            parent_ids=None):
+
+        if reference_parameters is None:
+            reference_parameters = {}
+        if tags is None:
+            tags = {}
+        if parent_ids is None:
+            parent_ids = []
 
         endpoint = "/versions/edges"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
@@ -147,7 +156,9 @@ class GroundClient:
     GRAPH METHODS
     '''
 
-    def create_graph(self, source_key, name, tags={}):
+    def create_graph(self, source_key, name, tags=None):
+        if tags is None:
+            tags = {}
         response = self._create_item("graphs", source_key, name, tags)
         if response is not None:
             return model.core.graph.Graph(response)
@@ -156,10 +167,17 @@ class GroundClient:
                              graph_id,
                              edge_version_ids,
                              reference=None,
-                             reference_parameters={},
-                             tags={},
+                             reference_parameters=None,
+                             tags=None,
                              structure_version_id=-1,
-                             parent_ids=[]):
+                             parent_ids=None):
+
+        if reference_parameters is None:
+            reference_parameters = {}
+        if tags is None:
+            tags = {}
+        if parent_ids is None:
+            parent_ids = []
 
         endpoint = "/versions/graphs"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
@@ -191,18 +209,27 @@ class GroundClient:
     NODE METHODS
     '''
 
-    def create_node(self, source_key, name, tags={}):
+    def create_node(self, source_key, name, tags=None):
+        if tags is None:
+            tags = {}
         response = self._create_item("nodes", source_key, name, tags)
         if response is not None:
             return model.core.node.Node(response)
 
     def create_node_version(self,
-            node_id,
-            reference=None,
-            reference_parameters={},
-            tags={},
-            structure_version_id=-1,
-            parent_ids=[]):
+                            node_id,
+                            reference=None,
+                            reference_parameters=None,
+                            tags=None,
+                            structure_version_id=-1,
+                            parent_ids=None):
+
+        if reference_parameters is None:
+            reference_parameters = {}
+        if tags is None:
+            tags = {}
+        if parent_ids is None:
+            parent_ids = []
 
         endpoint = "/versions/nodes"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
@@ -234,15 +261,20 @@ class GroundClient:
     STRUCTURE METHODS
     '''
 
-    def create_structure(self, source_key, name, tags={}):
+    def create_structure(self, source_key, name, tags=None):
+        if tags is None:
+            tags = {}
         response = self._create_item("structures", source_key, name, tags)
         if response is not None:
             return model.core.structure.Structure(response)
 
     def create_structure_version(self,
-            structure_id,
-            attributes,
-            parent_ids=[]):
+                                 structure_id,
+                                 attributes,
+                                 parent_ids=None):
+
+        if parent_ids is None:
+            parent_ids = []
 
         endpoint = "/versions/structures"
 
@@ -272,20 +304,29 @@ class GroundClient:
     LINEAGE EDGE METHODS
     '''
 
-    def create_lineage_edge(self, source_key, name, tags={}):
+    def create_lineage_edge(self, source_key, name, tags=None):
+        if tags is None:
+            tags = {}
         response = self._create_item("lineage_edges", source_key, name, tags)
         if response is not None:
             return model.usage.lineage_edge.LineageEdge(response)
 
     def create_lineage_edge_version(self,
-            edge_id,
-            to_rich_version_id,
-            from_rich_version_id,
-            reference=None,
-            reference_parameters={},
-            tags={},
-            structure_version_id=-1,
-            parent_ids=[]):
+                                    edge_id,
+                                    to_rich_version_id,
+                                    from_rich_version_id,
+                                    reference=None,
+                                    reference_parameters=None,
+                                    tags=None,
+                                    structure_version_id=-1,
+                                    parent_ids=None):
+
+        if reference_parameters is None:
+            reference_parameters = {}
+        if tags is None:
+            tags = {}
+        if parent_ids is None:
+            parent_ids = []
 
         endpoint = "/versions/lineage_edges"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
@@ -318,7 +359,9 @@ class GroundClient:
     LINEAGE GRAPH METHODS
     '''
 
-    def create_lineage_graph(self, source_key, name, tags={}):
+    def create_lineage_graph(self, source_key, name, tags=None):
+        if tags is None:
+            tags = {}
         response = self._create_item("lineage_graphs", source_key, name, tags)
         if response is not None:
             return model.usage.lineage_graph.LineageGraph(response)
@@ -327,10 +370,17 @@ class GroundClient:
                                      lineage_graph_id,
                                      lineage_edge_version_ids,
                                      reference=None,
-                                     reference_parameters={},
-                                     tags={},
+                                     reference_parameters=None,
+                                     tags=None,
                                      structure_version_id=-1,
-                                     parent_ids=[]):
+                                     parent_ids=None):
+
+        if reference_parameters is None:
+            reference_parameters = {}
+        if tags is None:
+            tags = {}
+        if parent_ids is None:
+            parent_ids = []
 
         endpoint = "/versions/lineage_graphs"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
