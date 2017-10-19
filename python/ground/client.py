@@ -12,7 +12,7 @@ class GroundClient:
     HELPER METHODS
     '''
 
-    def _makeGetRequest(self, endpoint, return_json=True):
+    def _make_get_request(self, endpoint, return_json=True):
         request = requests.get(self.url + endpoint)
 
         if return_json:
@@ -25,7 +25,7 @@ class GroundClient:
         else:
             pass
 
-    def _makePostRequest(self, endpoint, body, return_json=True):
+    def _make_post_request(self, endpoint, body, return_json=True):
         request = requests.post(self.url + endpoint, json=body)
 
         if return_json:
@@ -38,7 +38,7 @@ class GroundClient:
         else:
             pass
 
-    def _getRichVersionJson(self, reference, reference_parameters, tags, structure_version_id, parent_ids):
+    def _get_rich_version_json(self, reference, reference_parameters, tags, structure_version_id, parent_ids):
         body = {}
 
         if reference:
@@ -58,58 +58,58 @@ class GroundClient:
 
         return body
 
-    def _createItem(self, item_type, source_key, name, tags):
+    def _create_item(self, item_type, source_key, name, tags):
         endpoint = "/" + item_type
         body = {"sourceKey": source_key, "name": name}
 
         if tags:
             body["tags"] = tags
 
-        return self._makePostRequest(endpoint, body)
+        return self._make_post_request(endpoint, body)
 
-    def _getItem(self, item_type, source_key):
-        return self._makeGetRequest("/" + item_type + "/" + source_key)
+    def _get_item(self, item_type, source_key):
+        return self._make_get_request("/" + item_type + "/" + source_key)
 
-    def _getItemLatestVersions(self, item_type, source_key):
-        return self._makeGetRequest("/" + item_type + "/" + source_key + "/latest")
+    def _get_item_latest_versions(self, item_type, source_key):
+        return self._make_get_request("/" + item_type + "/" + source_key + "/latest")
 
-    def _getItemHistory(self, item_type, source_key):
-        return self._makeGetRequest("/" + item_type + "/" + source_key + "/history")
+    def _get_item_history(self, item_type, source_key):
+        return self._make_get_request("/" + item_type + "/" + source_key + "/history")
 
-    def _getVersion(self, item_type, id):
-        return self._makeGetRequest("/versions/" + item_type + "/" + str(id))
+    def _get_version(self, item_type, id):
+        return self._make_get_request("/versions/" + item_type + "/" + str(id))
 
     '''
     EDGE METHODS
     '''
 
-    def createEdge(self, source_key, name, from_node_id, to_node_id, tags={}):
+    def create_edge(self, source_key, name, from_node_id, to_node_id, tags={}):
         endpoint = "/edges"
         body = {"sourceKey": source_key, "name": name, "fromNodeId": from_node_id, "toNodeId": to_node_id}
 
         if tags:
             body["tags"] = tags
 
-        response = self._makePostRequest(endpoint, body)
+        response = self._make_post_request(endpoint, body)
         if response is None:
             return None
         else:
             return model.core.edge.Edge(response)
 
-    def createEdgeVersion(self,
-            edge_id,
-            to_node_version_start_id,
-            from_node_version_start_id,
-            to_node_version_end_id=-1,
-            from_node_version_end_id=-1,
-            reference=None,
-            reference_parameters={},
-            tags={},
-            structure_version_id=-1,
-            parent_ids=[]):
+    def create_edge_version(self,
+                            edge_id,
+                            to_node_version_start_id,
+                            from_node_version_start_id,
+                            to_node_version_end_id=-1,
+                            from_node_version_end_id=-1,
+                            reference=None,
+                            reference_parameters={},
+                            tags={},
+                            structure_version_id=-1,
+                            parent_ids=[]):
 
         endpoint = "/versions/edges"
-        body = self._getRichVersionJson(reference, reference_parameters, tags, structure_version_id, parent_ids)
+        body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
 
         body["edgeId"] = edge_id
         body["toNodeVersionStartId"] = to_node_version_start_id
@@ -121,25 +121,25 @@ class GroundClient:
         if from_node_version_end_id > 0:
             body["fromNodeVersionEndId"] = from_node_version_end_id
 
-        response = self._makePostRequest(endpoint, body)
+        response = self._make_post_request(endpoint, body)
         if response is None:
             return None
         else:
             return model.core.edge_version.EdgeVersion(response)
 
-    def getEdge(self, source_key):
-        response = self._getItem("edges", source_key)
+    def get_edge(self, source_key):
+        response = self._get_item("edges", source_key)
         if response is not None:
             return model.core.edge.Edge(response)
 
-    def getEdgeLatestVersions(self, source_key):
-        return self._getItemLatestVersions("edges", source_key)
+    def get_edge_latest_versions(self, source_key):
+        return self._get_item_latest_versions("edges", source_key)
 
-    def getEdgeHistory(self, source_key):
-        return self._getItemHistory("edges", source_key)
+    def get_edge_history(self, source_key):
+        return self._get_item_history("edges", source_key)
 
-    def getEdgeVersion(self, id):
-        response = self._getVersion("edges", id)
+    def get_edge_version(self, id):
+        response = self._get_version("edges", id)
         if response is not None:
             return model.core.edge_version.EdgeVersion(response)
 
@@ -147,43 +147,43 @@ class GroundClient:
     GRAPH METHODS
     '''
 
-    def createGraph(self, source_key, name, tags={}):
-        response = self._createItem("graphs", source_key, name, tags)
+    def create_graph(self, source_key, name, tags={}):
+        response = self._create_item("graphs", source_key, name, tags)
         if response is not None:
             return model.core.graph.Graph(response)
 
-    def createGraphVersion(self,
-            graph_id,
-            edge_version_ids,
-            reference=None,
-            reference_parameters={},
-            tags={},
-            structure_version_id=-1,
-            parent_ids=[]):
+    def create_graph_version(self,
+                             graph_id,
+                             edge_version_ids,
+                             reference=None,
+                             reference_parameters={},
+                             tags={},
+                             structure_version_id=-1,
+                             parent_ids=[]):
 
         endpoint = "/versions/graphs"
-        body = self._getRichVersionJson(reference, reference_parameters, tags, structure_version_id, parent_ids)
+        body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
 
         body["graphId"] = graph_id
         body["edgeVersionIds"] = edge_version_ids
 
-        response = self._makePostRequest(endpoint, body)
+        response = self._make_post_request(endpoint, body)
         if response is not None:
             return model.core.graph_version.GraphVersion(response)
 
-    def getGraph(self, source_key):
-        response = self._getItem("graphs", source_key)
+    def get_graph(self, source_key):
+        response = self._get_item("graphs", source_key)
         if response is not None:
             return model.core.graph.Graph()
 
-    def getGraphLatestVersions(self, source_key):
-        return self._getItemLatestVersions("graphs", source_key)
+    def get_graph_latest_versions(self, source_key):
+        return self._get_item_latest_versions("graphs", source_key)
 
-    def getGraphHistory(self, source_key):
-        return self._getItemHistory("graphs", source_key)
+    def get_graph_history(self, source_key):
+        return self._get_item_history("graphs", source_key)
 
-    def getGraphVersion(self, id):
-        response = self._getVersion("graphs", id)
+    def get_graph_version(self, id):
+        response = self._get_version("graphs", id)
         if response is not None:
             return model.core.graph_version.GraphVersion(response)
 
@@ -191,12 +191,12 @@ class GroundClient:
     NODE METHODS
     '''
 
-    def createNode(self, source_key, name, tags={}):
-        response = self._createItem("nodes", source_key, name, tags)
+    def create_node(self, source_key, name, tags={}):
+        response = self._create_item("nodes", source_key, name, tags)
         if response is not None:
             return model.core.node.Node(response)
 
-    def createNodeVersion(self,
+    def create_node_version(self,
             node_id,
             reference=None,
             reference_parameters={},
@@ -205,41 +205,41 @@ class GroundClient:
             parent_ids=[]):
 
         endpoint = "/versions/nodes"
-        body = self._getRichVersionJson(reference, reference_parameters, tags, structure_version_id, parent_ids)
+        body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
 
         body["nodeId"] = node_id
 
-        response = self._makePostRequest(endpoint, body)
+        response = self._make_post_request(endpoint, body)
         if response is not None:
             return model.core.node_version.NodeVersion(response)
 
-    def getNode(self, source_key):
-        return model.core.node.Node(self._getItem("nodes", source_key))
+    def get_node(self, source_key):
+        return model.core.node.Node(self._get_item("nodes", source_key))
 
-    def getNodeLatestVersions(self, source_key):
-        return model.core.node_version.NodeVersion(self._getItemLatestVersions("nodes", source_key))
+    def get_node_latest_versions(self, source_key):
+        return model.core.node_version.NodeVersion(self._get_item_latest_versions("nodes", source_key))
 
-    def getNodeHistory(self, source_key):
-        return self._getItemHistory("nodes", source_key)
+    def get_node_history(self, source_key):
+        return self._get_item_history("nodes", source_key)
 
-    def getNodeVersion(self, id):
-        response = self._getVersion("nodes", id)
+    def get_node_version(self, id):
+        response = self._get_version("nodes", id)
         if response is not None:
             return model.core.node.Node(response)
 
-    def getNodeVersionAdjacentLineage(self, id):
-        return self._makeGetRequest("/versions/nodes/adjacent/lineage/" + str(id))
+    def get_node_version_adjacent_lineage(self, id):
+        return self._make_get_request("/versions/nodes/adjacent/lineage/" + str(id))
 
     '''
     STRUCTURE METHODS
     '''
 
-    def createStructure(self, source_key, name, tags={}):
-        response = self._createItem("structures", source_key, name, tags)
+    def create_structure(self, source_key, name, tags={}):
+        response = self._create_item("structures", source_key, name, tags)
         if response is not None:
             return model.core.structure.Structure(response)
 
-    def createStructureVersion(self,
+    def create_structure_version(self,
             structure_id,
             attributes,
             parent_ids=[]):
@@ -248,23 +248,23 @@ class GroundClient:
 
         body = {"structureId": structure_id, "attributes": attributes}
 
-        response = self._makePostRequest(endpoint, body)
+        response = self._make_post_request(endpoint, body)
         if response is not None:
             return model.core.structure_version.StructureVersion(response)
 
-    def getStructure(self, source_key):
-        response = self._getItem("structures", source_key)
+    def get_structure(self, source_key):
+        response = self._get_item("structures", source_key)
         if response is not None:
             return model.core.structure.Structure(response)
 
-    def getStructureLatestVersions(self, source_key):
-        return self._getItemLatestVersions("structures", source_key)
+    def get_structure_latest_versions(self, source_key):
+        return self._get_item_latest_versions("structures", source_key)
 
-    def getStructureHistory(self, source_key):
-        return self._getItemHistory("structures", source_key)
+    def get_structure_history(self, source_key):
+        return self._get_item_history("structures", source_key)
 
-    def getStructureVersion(self, id):
-        response = self._getVersion("structures", id)
+    def get_structure_version(self, id):
+        response = self._get_version("structures", id)
         if response is not None:
             return model.core.structure_version.StructureVersion(response)
 
@@ -272,12 +272,12 @@ class GroundClient:
     LINEAGE EDGE METHODS
     '''
 
-    def createLineageEdge(self, source_key, name, tags={}):
-        response = self._createItem("lineage_edges", source_key, name, tags)
+    def create_lineage_edge(self, source_key, name, tags={}):
+        response = self._create_item("lineage_edges", source_key, name, tags)
         if response is not None:
             return model.usage.lineage_edge.LineageEdge(response)
 
-    def createLineageEdgeVersion(self,
+    def create_lineage_edge_version(self,
             edge_id,
             to_rich_version_id,
             from_rich_version_id,
@@ -288,29 +288,29 @@ class GroundClient:
             parent_ids=[]):
 
         endpoint = "/versions/lineage_edges"
-        body = self._getRichVersionJson(reference, reference_parameters, tags, structure_version_id, parent_ids)
+        body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
 
         body["lineageEdgeId"] = edge_id
         body["toRichVersionId"] = to_rich_version_id
         body["fromRichVersionId"] = from_rich_version_id
 
-        response = self._makePostRequest(endpoint, body)
+        response = self._make_post_request(endpoint, body)
         if response is not None:
             return model.usage.lineage_edge_version.LineageEdgeVersion(response)
 
-    def getLineageEdge(self, source_key):
-        response = self._getItem("lineage_edges", source_key)
+    def get_lineage_edge(self, source_key):
+        response = self._get_item("lineage_edges", source_key)
         if response is not None:
             return model.usage.lineage_edge.LineageEdge(response)
 
-    def getLineageEdgeLatestVersions(self, source_key):
-        return self._getItemLatestVersions("lineage_edges", source_key)
+    def get_lineage_edge_latest_versions(self, source_key):
+        return self._get_item_latest_versions("lineage_edges", source_key)
 
-    def getLineageEdgeHistory(self, source_key):
-        return self._getItemHistory("lineage_edges", source_key)
+    def get_lineage_edge_history(self, source_key):
+        return self._get_item_history("lineage_edges", source_key)
 
-    def getLineageEdgeVersion(self, id):
-        response = self._getVersion("lineage_edges", id)
+    def get_lineage_edge_version(self, id):
+        response = self._get_version("lineage_edges", id)
         if response is not None:
             return model.usage.lineage_edge_version.LineageEdgeVersion(response)
 
@@ -318,42 +318,42 @@ class GroundClient:
     LINEAGE GRAPH METHODS
     '''
 
-    def createLineageGraph(self, source_key, name, tags={}):
-        response = self._createItem("lineage_graphs", source_key, name, tags)
+    def create_lineage_graph(self, source_key, name, tags={}):
+        response = self._create_item("lineage_graphs", source_key, name, tags)
         if response is not None:
             return model.usage.lineage_graph.LineageGraph(response)
 
-    def createLineageGraphVersion(self,
-            lineage_graph_id,
-            lineage_edge_version_ids,
-            reference=None,
-            reference_parameters={},
-            tags={},
-            structure_version_id=-1,
-            parent_ids=[]):
+    def create_lineage_graph_version(self,
+                                     lineage_graph_id,
+                                     lineage_edge_version_ids,
+                                     reference=None,
+                                     reference_parameters={},
+                                     tags={},
+                                     structure_version_id=-1,
+                                     parent_ids=[]):
 
         endpoint = "/versions/lineage_graphs"
-        body = self._getRichVersionJson(reference, reference_parameters, tags, structure_version_id, parent_ids)
+        body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
 
         body["lineageGraphId"] = lineage_graph_id
         body["lineageEdgeVersionIds"] = lineage_edge_version_ids
 
-        response = self._makePostRequest(endpoint, body)
+        response = self._make_post_request(endpoint, body)
         if response is not None:
             return model.usage.lineage_graph_version.LineageGraphVersion(response)
 
-    def getLineageGraph(self, source_key):
-        response = self._getItem("lineage_graphs", source_key)
+    def get_lineage_graph(self, source_key):
+        response = self._get_item("lineage_graphs", source_key)
         if response is not None:
             return model.usage.lineage_graph.LineageGraph(response)
 
-    def getLineageGraphLatestVersions(self, source_key):
-        return self._getItemLatestVersions("lineage_graphs", source_key)
+    def get_lineage_graph_latest_versions(self, source_key):
+        return self._get_item_latest_versions("lineage_graphs", source_key)
 
-    def getLineageGraphHistory(self, source_key):
-        return self._getItemHistory("lineage_graphs", source_key)
+    def get_lineage_graph_history(self, source_key):
+        return self._get_item_history("lineage_graphs", source_key)
 
-    def getLineageGraphVersion(self, id):
-        response = self._getVersion("lineage_graphs", id)
+    def get_lineage_graph_version(self, id):
+        response = self._get_version("lineage_graphs", id)
         if response is not None:
             return model.usage.lineage_graph_version.LineageGraphVersion(response)
