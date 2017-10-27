@@ -100,10 +100,10 @@ class GroundClient:
 
     def create_edge_version(self,
                             edge_id,
-                            to_node_version_start_id,
                             from_node_version_start_id,
-                            to_node_version_end_id=-1,
+                            to_node_version_start_id,
                             from_node_version_end_id=-1,
+                            to_node_version_end_id=-1,
                             reference=None,
                             reference_parameters=None,
                             tags=None,
@@ -192,7 +192,7 @@ class GroundClient:
     def get_graph(self, source_key):
         response = self._get_item("graphs", source_key)
         if response is not None:
-            return model.core.graph.Graph()
+            return model.core.graph.Graph(response)
 
     def get_graph_latest_versions(self, source_key):
         return self._get_item_latest_versions("graphs", source_key)
@@ -244,7 +244,7 @@ class GroundClient:
         return model.core.node.Node(self._get_item("nodes", source_key))
 
     def get_node_latest_versions(self, source_key):
-        return model.core.node_version.NodeVersion(self._get_item_latest_versions("nodes", source_key))
+        return self._get_item_latest_versions("nodes", source_key)
 
     def get_node_history(self, source_key):
         return self._get_item_history("nodes", source_key)
@@ -252,7 +252,7 @@ class GroundClient:
     def get_node_version(self, id):
         response = self._get_version("nodes", id)
         if response is not None:
-            return model.core.node.Node(response)
+            return model.core.node_version.NodeVersion(response)
 
     def get_node_version_adjacent_lineage(self, id):
         return self._make_get_request("/versions/nodes/adjacent/lineage/" + str(id))
@@ -278,7 +278,11 @@ class GroundClient:
 
         endpoint = "/versions/structures"
 
-        body = {"structureId": structure_id, "attributes": attributes}
+        body = {
+            "structureId": structure_id,
+            "attributes": attributes,
+            "parentIds": parent_ids
+        }
 
         response = self._make_post_request(endpoint, body)
         if response is not None:
