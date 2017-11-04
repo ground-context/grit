@@ -1,4 +1,4 @@
-from ..version.item import Item
+from ground.common.model.version.item import Item
 
 
 class Structure(Item):

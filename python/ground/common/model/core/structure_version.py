@@ -1,4 +1,4 @@
-from ..version.version import Version
+from ground.common.model.version.version import Version
 
 
 class StructureVersion(Version):

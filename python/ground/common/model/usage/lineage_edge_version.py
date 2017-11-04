@@ -1,4 +1,4 @@
-from ..core.rich_version import RichVersion
+from ground.common.model.core.rich_version import RichVersion
 
 
 class LineageEdgeVersion(RichVersion):

@@ -1,5 +1,4 @@
-from .tag import Tag
-
+from ground.common.model.version.tag import Tag
 
 class Item:
 
