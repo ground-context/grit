@@ -84,8 +84,6 @@ class GroundClient:
     '''
 
     def create_edge(self, source_key, name, from_node_id, to_node_id, tags=None):
-        if tags is None:
-            tags = {}
         endpoint = "/edges"
         body = {"sourceKey": source_key, "name": name, "fromNodeId": from_node_id, "toNodeId": to_node_id}
 
@@ -109,13 +107,6 @@ class GroundClient:
                             tags=None,
                             structure_version_id=-1,
                             parent_ids=None):
-
-        if reference_parameters is None:
-            reference_parameters = {}
-        if tags is None:
-            tags = {}
-        if parent_ids is None:
-            parent_ids = []
 
         endpoint = "/versions/edges"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
@@ -157,8 +148,6 @@ class GroundClient:
     '''
 
     def create_graph(self, source_key, name, tags=None):
-        if tags is None:
-            tags = {}
         response = self._create_item("graphs", source_key, name, tags)
         if response is not None:
             return model.core.graph.Graph(response)
@@ -171,13 +160,6 @@ class GroundClient:
                              tags=None,
                              structure_version_id=-1,
                              parent_ids=None):
-
-        if reference_parameters is None:
-            reference_parameters = {}
-        if tags is None:
-            tags = {}
-        if parent_ids is None:
-            parent_ids = []
 
         endpoint = "/versions/graphs"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
@@ -210,8 +192,6 @@ class GroundClient:
     '''
 
     def create_node(self, source_key, name, tags=None):
-        if tags is None:
-            tags = {}
         response = self._create_item("nodes", source_key, name, tags)
         if response is not None:
             return model.core.node.Node(response)
@@ -223,13 +203,6 @@ class GroundClient:
                             tags=None,
                             structure_version_id=-1,
                             parent_ids=None):
-
-        if reference_parameters is None:
-            reference_parameters = {}
-        if tags is None:
-            tags = {}
-        if parent_ids is None:
-            parent_ids = []
 
         endpoint = "/versions/nodes"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
@@ -262,8 +235,6 @@ class GroundClient:
     '''
 
     def create_structure(self, source_key, name, tags=None):
-        if tags is None:
-            tags = {}
         response = self._create_item("structures", source_key, name, tags)
         if response is not None:
             return model.core.structure.Structure(response)
@@ -309,8 +280,6 @@ class GroundClient:
     '''
 
     def create_lineage_edge(self, source_key, name, tags=None):
-        if tags is None:
-            tags = {}
         response = self._create_item("lineage_edges", source_key, name, tags)
         if response is not None:
             return model.usage.lineage_edge.LineageEdge(response)
@@ -324,13 +293,6 @@ class GroundClient:
                                     tags=None,
                                     structure_version_id=-1,
                                     parent_ids=None):
-
-        if reference_parameters is None:
-            reference_parameters = {}
-        if tags is None:
-            tags = {}
-        if parent_ids is None:
-            parent_ids = []
 
         endpoint = "/versions/lineage_edges"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
@@ -364,8 +326,6 @@ class GroundClient:
     '''
 
     def create_lineage_graph(self, source_key, name, tags=None):
-        if tags is None:
-            tags = {}
         response = self._create_item("lineage_graphs", source_key, name, tags)
         if response is not None:
             return model.usage.lineage_graph.LineageGraph(response)
@@ -378,13 +338,6 @@ class GroundClient:
                                      tags=None,
                                      structure_version_id=-1,
                                      parent_ids=None):
-
-        if reference_parameters is None:
-            reference_parameters = {}
-        if tags is None:
-            tags = {}
-        if parent_ids is None:
-            parent_ids = []
 
         endpoint = "/versions/lineage_graphs"
         body = self._get_rich_version_json(reference, reference_parameters, tags, structure_version_id, parent_ids)
