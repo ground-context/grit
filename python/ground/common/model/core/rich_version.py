@@ -1,5 +1,5 @@
 from ground.common.model.version.version import Version
-
+from ground.common.model.version.tag import Tag
 
 class RichVersion(Version):
 
@@ -7,6 +7,10 @@ class RichVersion(Version):
         super().__init__(json_payload['id'])
 
         self._tags = json_payload.get('tags', {}) or {}
+
+        for key, value in list(self._tags.items()):
+            if not isinstance(value, Tag):
+                self._tags[key] = Tag(value)
 
         svid = json_payload.get('structureVersionId')
         if svid is None or svid <= 0:
