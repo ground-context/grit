@@ -313,7 +313,7 @@ class GitImplementation(GroundAPI):
             if not os.path.exists(self.path + '.gitignore'):
                 with open(self.path + '.gitignore', 'w') as f:
                     f.write('next_id.txt\n')
-                self.repo.index.add([os.getcwd() + '/' + self.path + '.gitignore'])
+                self.repo.index.add([self.path + '.gitignore'])
                 self.repo.index.commit("Initialize Ground GitImplementation repository")
         if not os.path.exists(self.path + 'next_id.txt'):
             with open(self.path + 'next_id.txt', 'w') as f:
@@ -454,7 +454,7 @@ class GitImplementation(GroundAPI):
         return str(output, 'UTF-8')
 
     def _commit(self, id, className):
-        totFile = os.getcwd() + '/' + self.path + str(id) + '.json'
+        totFile = self.path + str(id) + '.json'
         self.repo.index.add([totFile])
         self.repo.index.commit("id: " + str(id) + ", class: " + className)
 
