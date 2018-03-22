@@ -303,18 +303,42 @@ class GroundAPI:
             "Invalid call to GroundClient.getLineageGraphVersion")
 
 class GitImplementation(GroundAPI):
+
     def __init__(self):
 
+        self._items = ['edge', 'graph', 'node', 'structure', 'lineage_edge', 'lineage_graph']
         self.path = os.path.expanduser('~') + "/grit.d/"
+
+        self.cls2loc = {
+            'Edge' : 'edge/',
+            'EdgeVersion' : 'edge/',
+            'Graph' : 'graph/',
+            'GraphVersion' : 'graph/',
+            'Node' : 'node/',
+            'NodeVersion' : 'node/',
+            'Structure' : 'structure/',
+            'StructureVersion' : 'structure/',
+            'LineageEdge' : 'lineage_edge/',
+            'LineageEdgeVersion' : 'lineage_edge/',
+            'LineageGraph' : 'lineage_graph/',
+            'LineageGraphVersion' : 'lineage_graph/'
+        }
 
         if not os.path.isdir(self.path):
             os.mkdir(self.path)
             self.repo = git.Repo.init(self.path)
+
+            for item in self._items:
+                os.mkdir(self.path + item)
+
             if not os.path.exists(self.path + '.gitignore'):
                 with open(self.path + '.gitignore', 'w') as f:
                     f.write('next_id.txt\n')
-                self.repo.index.add([self.path + '.gitignore'])
-                self.repo.index.commit("Initialize Ground GitImplementation repository")
+
+            self.repo.index.add([self.path + name for name in ['.gitignore',] + self._items])
+            self.repo.index.commit("Initialize Ground GitImplementation repository")
+        else:
+            self.repo = git.Repo(self.path)
         if not os.path.exists(self.path + 'next_id.txt'):
             with open(self.path + 'next_id.txt', 'w') as f:
                 f.write('0')
@@ -383,8 +407,9 @@ class GitImplementation(GroundAPI):
         return newid
 
     def _write_files(self, id, body):
-        with open(self.path + str(id) + '.json', 'w') as f:
-            f.write(json.dumps(body))
+        filename = self._conventional_to_readable(str(id) + '.json')
+        with open(self.path + self.cls2loc[body['class']] + filename, 'w') as f:
+            json.dump(body, f)
 
     def _read_files(self, sourceKey, className):
         files = [f for f in os.listdir(self.path) if os.path.isfile(os.path.join(self.path, f))]
@@ -436,12 +461,13 @@ class GitImplementation(GroundAPI):
         return versions
 
     def _find_file(self, sourceKey, className):
-        files = [f for f in os.listdir(self.path) if os.path.isfile(os.path.join(self.path, f))]
+        ruta = self.path + self.cls2loc[className]
+        files = [f for f in os.listdir(ruta) if os.path.isfile(os.path.join(ruta, f))]
         for file in files:
-            filename = file.split('.')
+            filename = self._readable_to_conventional(file).split('.')
             if (filename[-1] == 'json') and (filename[0] != 'ids'):
-                with open(self.path + file, 'r') as f:
-                    fileDict = json.loads(f.read())
+                with open(self.path + self.cls2loc[className] + file, 'r') as f:
+                    fileDict = json.load(f)
                     if (('sourceKey' in fileDict) and (fileDict['sourceKey'] == sourceKey)
                         and (fileDict['class'] == className)):
                         return True
@@ -450,12 +476,32 @@ class GitImplementation(GroundAPI):
     def __run_proc__(self, bashCommand):
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
+
         return str(output, 'UTF-8')
 
-    def _commit(self, id, className):
-        totFile = self.path + str(id) + '.json'
+    def _commit(self, id, className, sourcekey):
+        totFile = self.path + self.cls2loc[className] + self._conventional_to_readable(sourcekey + '.json')
         self.repo.index.add([totFile])
         self.repo.index.commit("id: " + str(id) + ", class: " + className)
+
+    @staticmethod
+    def _readable_to_conventional(filename):
+        filename = filename.split('.')
+        assert len(filename) == 3
+        filename.reverse()
+        filename = '.'.join(filename[1:])
+
+        return filename
+
+    @staticmethod
+    def _conventional_to_readable(filename):
+        filename = filename.split('.')
+        assert len(filename) == 2
+        filename.reverse()
+        filename.append('txt')
+
+        return '.'.join(filename)
+
 
         ### EDGES ###
     def createEdge(self, sourceKey, fromNodeId, toNodeId, name="null", tags=None):
@@ -545,14 +591,12 @@ class GitImplementation(GroundAPI):
             body = self._create_item(Node.__name__, sourceKey, name, tags)
             node = Node(body)
             nodeId = node.get_item_id()
-            #self.nodes[sourceKey] = node
-            #self.nodes[nodeId] = node
             write = self._deconstruct_item(node)
-            self._write_files(nodeId, write)
-            self._commit(nodeId, Node.__name__)
+            self._write_files(sourceKey, write)
+            self._commit(nodeId, Node.__name__, sourceKey)
         else:
-            node = self._read_files(sourceKey, Node.__name__)
-            nodeId = node['id']
+            raise FileExistsError(
+                "Node with source key '{}' already exists.".format(sourceKey))
 
         return nodeId
 
