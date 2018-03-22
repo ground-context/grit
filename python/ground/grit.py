@@ -406,18 +406,20 @@ class GitImplementation(GroundAPI):
             f.write(nxtid)
         return newid
 
-    def _write_files(self, id, body):
+    def _write_files(self, id, body, className):
         filename = self._conventional_to_readable(str(id) + '.json')
-        with open(self.path + self.cls2loc[body['class']] + filename, 'w') as f:
+        with open(self.path + self.cls2loc[className] + filename, 'w') as f:
             json.dump(body, f)
 
-    def _read_files(self, sourceKey, className):
-        files = [f for f in os.listdir(self.path) if os.path.isfile(os.path.join(self.path, f))]
+    def _read_files(self, sourceKey, className, layer):
+        ruta = self.path + self.cls2loc[className]
+        files = [f for f in os.listdir(ruta) if os.path.isfile(os.path.join(ruta, f))]
         for file in files:
-            filename = file.split('.')
+            filename = self._readable_to_conventional(file).split('.')
             if (filename[-1] == 'json') and (filename[0] != 'ids'):
-                with open(self.path + file, 'r') as f:
-                    fileDict = json.loads(f.read())
+                with open(ruta + file, 'r') as f:
+                    fileDict = json.load(f)
+                    fileDict = fileDict[layer]
                     if (('sourceKey' in fileDict) and (fileDict['sourceKey'] == sourceKey)
                         and (fileDict['class'] == className)):
                         return fileDict
@@ -460,14 +462,15 @@ class GitImplementation(GroundAPI):
                         versions[fileDict['id']] = fileDict
         return versions
 
-    def _find_file(self, sourceKey, className):
+    def _find_file(self, sourceKey, className, layer):
         ruta = self.path + self.cls2loc[className]
         files = [f for f in os.listdir(ruta) if os.path.isfile(os.path.join(ruta, f))]
         for file in files:
             filename = self._readable_to_conventional(file).split('.')
             if (filename[-1] == 'json') and (filename[0] != 'ids'):
-                with open(self.path + self.cls2loc[className] + file, 'r') as f:
+                with open(ruta + file, 'r') as f:
                     fileDict = json.load(f)
+                    fileDict = fileDict[layer]
                     if (('sourceKey' in fileDict) and (fileDict['sourceKey'] == sourceKey)
                         and (fileDict['class'] == className)):
                         return True
@@ -587,12 +590,13 @@ class GitImplementation(GroundAPI):
 
     ### NODES ###
     def createNode(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, Node.__name__):
+        if not self._find_file(sourceKey, Node.__name__, "Item"):
             body = self._create_item(Node.__name__, sourceKey, name, tags)
             node = Node(body)
             nodeId = node.get_item_id()
             write = self._deconstruct_item(node)
-            self._write_files(sourceKey, write)
+            write = {"Item" : write, "ItemVersion": {}}
+            self._write_files(sourceKey, write, Node.__name__)
             self._commit(nodeId, Node.__name__, sourceKey)
         else:
             raise FileExistsError(
@@ -610,8 +614,6 @@ class GitImplementation(GroundAPI):
         nodeVersion = NodeVersion(body)
         nodeVersionId = nodeVersion.get_id()
 
-        #self.nodeVersions[nodeVersionId] = nodeVersion
-
         write = self._deconstruct_rich_version_json(body)
         self._write_files(nodeVersionId, write)
         self._commit(nodeVersionId, NodeVersion.__name__)
@@ -620,7 +622,10 @@ class GitImplementation(GroundAPI):
 
 
     def getNode(self, sourceKey):
-        return self._read_files(sourceKey, Node.__name__)
+        if not self._find_file(sourceKey, Node.__name__, "Item"):
+            raise FileNotFoundError(
+                "Node with source key '{}' does not exist.".format(sourceKey))
+        return self._read_files(sourceKey, Node.__name__, "Item")
 
     def getNodeLatestVersions(self, sourceKey):
         nodeVersionMap = self._read_all_version(sourceKey, NodeVersion.__name__, Node.__name__)
