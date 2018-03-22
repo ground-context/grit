@@ -376,11 +376,10 @@ class GitImplementation(GroundAPI):
 
     def _gen_id(self):
         with open(self.path + 'next_id.txt', 'r') as f:
-            ids = json.loads(f.read())
-        newid = len(ids)
-        ids[newid] = newid
-        with open(self.path + 'next_id.txt', 'w') as f2:
-            f2.write(json.dumps(ids))
+            newid = int(f.read())
+        nxtid = str(newid + 1)
+        with open(self.path + 'next_id.txt', 'w') as f:
+            f.write(nxtid)
         return newid
 
     def _write_files(self, id, body):
