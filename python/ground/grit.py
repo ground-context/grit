@@ -304,27 +304,21 @@ class GroundAPI:
 
 class GitImplementation(GroundAPI):
     def __init__(self):
-        #self.nodes = {}
-        #self.nodeVersions = {}
-        #self.edges = {}
-        #self.edgeVersions = {}
-        #self.graphs = {}
-        #self.graphVersions = {}
-        #self.structures = {}
-        #self.structureVersions = {}
-        #self.lineageEdges = {}
-        #self.lineageEdgeVersions = {}
-        #self.lineageGraphs = {}
-        #self.lineageGraphVersions = {}
-        #self.ids = set([])
 
-        self.initialized = False
-        #if(path and (path[-1] != '/')):
-        #    path = path + '/'
-        self.path = "ground_git_dir/"
-        #if relative:
-        #    self.path = os.path.join(os.getcwd(), self.path)
-        #self.repo = None
+        self.path = os.path.expanduser('~') + "/grit.d/"
+
+        if not os.path.isdir(self.path):
+            os.mkdir(self.path)
+            self.repo = git.Repo.init(self.path)
+            if not os.path.exists(self.path + '.gitignore'):
+                with open(self.path + '.gitignore', 'w') as f:
+                    f.write('next_id.txt\n')
+                self.repo.index.add([os.getcwd() + '/' + self.path + '.gitignore'])
+                self.repo.index.commit("Initialize Ground GitImplementation repository")
+        if not os.path.exists(self.path + 'next_id.txt'):
+            with open(self.path + 'next_id.txt', 'w') as f:
+                f.write('0')
+
 
     def _get_rich_version_json(self, item_type, reference, reference_parameters,
                                tags, structure_version_id, parent_ids):
@@ -381,11 +375,11 @@ class GitImplementation(GroundAPI):
         return body
 
     def _gen_id(self):
-        with open(self.path + 'ids.json', 'r') as f:
+        with open(self.path + 'next_id.txt', 'r') as f:
             ids = json.loads(f.read())
         newid = len(ids)
         ids[newid] = newid
-        with open(self.path + 'ids.json', 'w') as f2:
+        with open(self.path + 'next_id.txt', 'w') as f2:
             f2.write(json.dumps(ids))
         return newid
 
@@ -459,24 +453,6 @@ class GitImplementation(GroundAPI):
         output, error = process.communicate()
         return str(output, 'UTF-8')
 
-    def _check_init(self):
-        if(not self.initialized):
-            raise ValueError('Ground GitImplementation instance must call .init() to initialize git in directory')
-
-    def init(self):
-        if not os.path.isdir(self.path):
-            os.mkdir(self.path)
-        if not os.path.exists(self.path + 'ids.json'):
-            with open(self.path + 'ids.json', 'w') as f:
-                f.write(json.dumps({}))
-        self.repo = git.Repo.init(self.path)
-        if not os.path.exists(self.path + '.gitignore'):
-            with open(self.path + '.gitignore', 'w') as f:
-                f.write('ids.json')
-            self.repo.index.add([os.getcwd() + '/' + self.path + '.gitignore'])
-            self.repo.index.commit("Initialize Ground GitImplementation repository")
-        self.initialized = True
-
     def _commit(self, id, className):
         totFile = os.getcwd() + '/' + self.path + str(id) + '.json'
         self.repo.index.add([totFile])
@@ -484,7 +460,6 @@ class GitImplementation(GroundAPI):
 
         ### EDGES ###
     def createEdge(self, sourceKey, fromNodeId, toNodeId, name="null", tags=None):
-        self._check_init()
         if not self._find_file(sourceKey, Edge.__name__):
             body = self._create_item(Edge.__name__, sourceKey, name, tags)
             body["fromNodeId"] = fromNodeId
@@ -507,7 +482,6 @@ class GitImplementation(GroundAPI):
     def createEdgeVersion(self, edgeId, toNodeVersionStartId, fromNodeVersionStartId, toNodeVersionEndId=None,
                           fromNodeVersionEndId=None, reference=None, referenceParameters=None, tags=None,
                           structureVersionId=None, parentIds=None):
-        self._check_init()
         body = self._get_rich_version_json(EdgeVersion.__name__, reference, referenceParameters,
                                            tags, structureVersionId, parentIds)
 
@@ -533,12 +507,10 @@ class GitImplementation(GroundAPI):
         return edgeVersionId
 
     def getEdge(self, sourceKey):
-        self._check_init()
         return self._read_files(sourceKey, Edge.__name__)
 
 
     def getEdgeLatestVersions(self, sourceKey):
-        self._check_init()
         edgeVersionMap = self._read_all_version(sourceKey, EdgeVersion.__name__, Edge.__name__)
         edgeVersions = set(list(edgeVersionMap.keys()))
         is_parent = set([])
@@ -551,7 +523,6 @@ class GitImplementation(GroundAPI):
         return [edgeVersionMap[Id] for Id in list(edgeVersions - is_parent)]
 
     def getEdgeHistory(self, sourceKey):
-        self._check_init()
         edgeVersionMap = self._read_all_version(sourceKey, EdgeVersion.__name__, Edge.__name__)
         edgeVersions = set(list(edgeVersionMap.keys()))
         parentChild = {}
@@ -567,12 +538,10 @@ class GitImplementation(GroundAPI):
         return parentChild
 
     def getEdgeVersion(self, edgeVersionId):
-        self._check_init()
         return self._read_version(edgeVersionId, EdgeVersion.__name__)
 
     ### NODES ###
     def createNode(self, sourceKey, name="null", tags=None):
-        self._check_init()
         if not self._find_file(sourceKey, Node.__name__):
             body = self._create_item(Node.__name__, sourceKey, name, tags)
             node = Node(body)
@@ -590,7 +559,6 @@ class GitImplementation(GroundAPI):
 
     def createNodeVersion(self, nodeId, reference=None, referenceParameters=None, tags=None,
                           structureVersionId=None, parentIds=None):
-        self._check_init()
         body = self._get_rich_version_json(NodeVersion.__name__, reference, referenceParameters,
                                            tags, structureVersionId, parentIds)
 
@@ -609,11 +577,9 @@ class GitImplementation(GroundAPI):
 
 
     def getNode(self, sourceKey):
-        self._check_init()
         return self._read_files(sourceKey, Node.__name__)
 
     def getNodeLatestVersions(self, sourceKey):
-        self._check_init()
         nodeVersionMap = self._read_all_version(sourceKey, NodeVersion.__name__, Node.__name__)
         nodeVersions = set(list(nodeVersionMap.keys()))
         is_parent = set([])
@@ -626,7 +592,6 @@ class GitImplementation(GroundAPI):
         return [nodeVersionMap[Id] for Id in list(nodeVersions - is_parent)]
 
     def getNodeHistory(self, sourceKey):
-        self._check_init()
         nodeVersionMap = self._read_all_version(sourceKey, NodeVersion.__name__, Node.__name__)
         nodeVersions = set(list(nodeVersionMap.keys()))
         parentChild = {}
@@ -642,12 +607,10 @@ class GitImplementation(GroundAPI):
         return parentChild
 
     def getNodeVersion(self, nodeVersionId):
-        self._check_init()
         return self._read_version(nodeVersionId, NodeVersion.__name__)
 
 
     def getNodeVersionAdjacentLineage(self, nodeVersionId):
-        self._check_init()
         lineageEdgeVersionMap = self._read_all_version_ever(LineageEdgeVersion.__name__)
         lineageEdgeVersions = set(list(lineageEdgeVersionMap.keys()))
         adjacent = []
@@ -660,7 +623,6 @@ class GitImplementation(GroundAPI):
 
     ### GRAPHS ###
     def createGraph(self, sourceKey, name="null", tags=None):
-        self._check_init()
         if not self._find_file(sourceKey, Graph.__name__):
             body = self._create_item(Graph.__name__, sourceKey, name, tags)
             graph = Graph(body)
@@ -679,7 +641,6 @@ class GitImplementation(GroundAPI):
 
     def createGraphVersion(self, graphId, edgeVersionIds, reference=None,
                            referenceParameters=None, tags=None, structureVersionId=None, parentIds=None):
-        self._check_init()
         body = self._get_rich_version_json(GraphVersion.__name__, reference, referenceParameters,
                                            tags, structureVersionId, parentIds)
 
@@ -698,11 +659,9 @@ class GitImplementation(GroundAPI):
         return graphVersionId
 
     def getGraph(self, sourceKey):
-        self._check_init()
         return self._read_files(sourceKey, Graph.__name__)
 
     def getGraphLatestVersions(self, sourceKey):
-        self._check_init()
         graphVersionMap = self._read_all_version(sourceKey, GraphVersion.__name__, Graph.__name__)
         graphVersions = set(list(graphVersionMap.keys()))
         is_parent = set([])
@@ -715,7 +674,6 @@ class GitImplementation(GroundAPI):
         return [graphVersionMap[Id] for Id in list(graphVersions - is_parent)]
 
     def getGraphHistory(self, sourceKey):
-        self._check_init()
         graphVersionMap = self._read_all_version(sourceKey, GraphVersion.__name__, Graph.__name__)
         graphVersions = set(list(graphVersionMap.keys()))
         parentChild = {}
@@ -731,12 +689,10 @@ class GitImplementation(GroundAPI):
         return parentChild
 
     def getGraphVersion(self, graphVersionId):
-        self._check_init()
         return self._read_version(graphVersionId, GraphVersion.__name__)
 
     ### STRUCTURES ###
     def createStructure(self, sourceKey, name="null", tags=None):
-        self._check_init()
         if not self._find_file(sourceKey, Structure.__name__):
             body = self._create_item(Structure.__name__, sourceKey, name, tags)
             structure = Structure(body)
@@ -754,7 +710,6 @@ class GitImplementation(GroundAPI):
 
 
     def createStructureVersion(self, structureId, attributes, parentIds=None):
-        self._check_init()
         body = {
             "id": self._gen_id(),
             "class":StructureVersion.__name__,
@@ -777,11 +732,9 @@ class GitImplementation(GroundAPI):
         return structureVersionId
 
     def getStructure(self, sourceKey):
-        self._check_init()
         return self._read_files(sourceKey, Structure.__name__)
 
     def getStructureLatestVersions(self, sourceKey):
-        self._check_init()
         structureVersionMap = self._read_all_version(sourceKey, StructureVersion.__name__, Structure.__name__)
         structureVersions = set(list(structureVersionMap.keys()))
         is_parent = set([])
@@ -794,7 +747,6 @@ class GitImplementation(GroundAPI):
         return [structureVersionMap[Id] for Id in list(structureVersions - is_parent)]
 
     def getStructureHistory(self, sourceKey):
-        self._check_init()
         structureVersionMap = self._read_all_version(sourceKey, StructureVersion.__name__, Structure.__name__)
         structureVersions = set(list(structureVersionMap.keys()))
         parentChild = {}
@@ -810,13 +762,11 @@ class GitImplementation(GroundAPI):
         return parentChild
 
     def getStructureVersion(self, structureVersionId):
-        self._check_init()
         return self._read_version(structureVersionId, StructureVersion.__name__)
 
 
     ### LINEAGE EDGES ###
     def createLineageEdge(self, sourceKey, name="null", tags=None):
-        self._check_init()
         if not self._find_file(sourceKey, LineageEdge.__name__):
             body = self._create_item(LineageEdge.__name__, sourceKey, name, tags)
             lineageEdge = LineageEdge(body)
@@ -835,7 +785,6 @@ class GitImplementation(GroundAPI):
 
     def createLineageEdgeVersion(self, lineageEdgeId, toRichVersionId, fromRichVersionId, reference=None,
                                  referenceParameters=None, tags=None, structureVersionId=None, parentIds=None):
-        self._check_init()
         body = self._get_rich_version_json(LineageEdgeVersion.__name__, reference, referenceParameters,
                                            tags, structureVersionId, parentIds)
 
@@ -855,11 +804,9 @@ class GitImplementation(GroundAPI):
         return lineageEdgeVersionId
 
     def getLineageEdge(self, sourceKey):
-        self._check_init()
         return self._read_files(sourceKey, LineageEdge.__name__)
 
     def getLineageEdgeLatestVersions(self, sourceKey):
-        self._check_init()
         lineageEdgeVersionMap = self._read_all_version(sourceKey, LineageEdgeVersion.__name__, LineageEdge.__name__)
         lineageEdgeVersions = set(list(lineageEdgeVersionMap.keys()))
         is_parent = set([])
@@ -872,7 +819,6 @@ class GitImplementation(GroundAPI):
         return [lineageEdgeVersionMap[Id] for Id in list(lineageEdgeVersions - is_parent)]
 
     def getLineageEdgeHistory(self, sourceKey):
-        self._check_init()
         lineageEdgeVersionMap = self._read_all_version(sourceKey, LineageEdgeVersion.__name__, LineageEdge.__name__)
         lineageEdgeVersions = set(list(lineageEdgeVersionMap.keys()))
         parentChild = {}
@@ -888,12 +834,10 @@ class GitImplementation(GroundAPI):
         return parentChild
 
     def getLineageEdgeVersion(self, lineageEdgeVersionId):
-        self._check_init()
         return self._read_version(lineageEdgeVersionId, LineageEdgeVersion.__name__)
 
     ### LINEAGE GRAPHS ###
     def createLineageGraph(self, sourceKey, name="null", tags=None):
-        self._check_init()
         if not self._find_file(sourceKey, LineageGraph.__name__):
             body = self._create_item(LineageGraph.__name__, sourceKey, name, tags)
             lineageGraph = LineageGraph(body)
@@ -912,7 +856,6 @@ class GitImplementation(GroundAPI):
 
     def createLineageGraphVersion(self, lineageGraphId, lineageEdgeVersionIds, reference=None,
                                   referenceParameters=None, tags=None, structureVersionId=None, parentIds=None):
-        self._check_init()
         body = self._get_rich_version_json(LineageGraphVersion.__name__, reference, referenceParameters,
                                            tags, structureVersionId, parentIds)
 
@@ -931,11 +874,9 @@ class GitImplementation(GroundAPI):
         return lineageGraphVersionId
 
     def getLineageGraph(self, sourceKey):
-        self._check_init()
         return self._read_files(sourceKey, LineageGraph.__name__)
 
     def getLineageGraphLatestVersions(self, sourceKey):
-        self._check_init()
         lineageGraphVersionMap = self._read_all_version(sourceKey, LineageGraphVersion.__name__, LineageGraph.__name__)
         lineageGraphVersions = set(list(lineageGraphVersionMap.keys()))
         is_parent = set([])
@@ -948,7 +889,6 @@ class GitImplementation(GroundAPI):
         return [lineageGraphVersionMap[Id] for Id in list(lineageGraphVersions - is_parent)]
 
     def getLineageGraphHistory(self, sourceKey):
-        self._check_init()
         lineageGraphVersionMap = self._read_all_version(sourceKey, LineageGraphVersion.__name__, LineageGraph.__name__)
         lineageGraphVersions = set(list(lineageGraphVersionMap.keys()))
         parentChild = {}
@@ -964,7 +904,6 @@ class GitImplementation(GroundAPI):
         return parentChild
 
     def getLineageGraphVersion(self, lineageGraphVersionId):
-        self._check_init()
         return self._read_version(lineageGraphVersionId, LineageGraphVersion.__name__)
 
     """
