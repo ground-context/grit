@@ -50,7 +50,7 @@ class GroundClient:
         if tags:
             body["tags"] = tags
 
-        if structure_version_id > 0:
+        if structure_version_id and int(structure_version_id) > 0:
             body["structureVersionId"] = structure_version_id
 
         if parent_ids:
