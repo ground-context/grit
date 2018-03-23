@@ -302,11 +302,11 @@ class GroundAPI:
         raise NotImplementedError(
             "Invalid call to GroundClient.getLineageGraphVersion")
 
-class GitImplementation(GroundAPI):
+class GitImplementation():
 
     def __init__(self):
 
-        self._items = ['edge', 'graph', 'node', 'structure', 'lineage_edge', 'lineage_graph']
+        self._items = ['edge', 'graph', 'node', 'structure', 'lineage_edge', 'lineage_graph', 'index']
         self.path = os.path.expanduser('~') + "/grit.d/"
 
         self.cls2loc = {
@@ -342,6 +342,9 @@ class GitImplementation(GroundAPI):
         if not os.path.exists(self.path + 'next_id.txt'):
             with open(self.path + 'next_id.txt', 'w') as f:
                 f.write('0')
+        if not os.path.exists(self.path + 'index/' + 'json.index.txt'):
+            with open(self.path + 'index/' + 'json.index.txt', 'w') as f:
+                json.dump({}, f)
 
 
     def _get_rich_version_json(self, item_type, reference, reference_parameters,
@@ -357,7 +360,7 @@ class GitImplementation(GroundAPI):
         if tags:
             body["tags"] = tags
 
-        if structure_version_id > 0:
+        if structure_version_id and int(structure_version_id) > 0:
             body["structureVersionId"] = structure_version_id
 
         if parent_ids:
@@ -366,8 +369,9 @@ class GitImplementation(GroundAPI):
         return body
 
     def _deconstruct_rich_version_json(self, body):
+        # This method needs MORE TESTING
         bodyRet = dict(body)
-        if bodyRet["tags"]:
+        if "tags" in bodyRet and bodyRet["tags"]:
             bodyTags = {}
             for key, value in list((bodyRet["tags"]).items()):
                 if isinstance(value, Tag):
@@ -404,7 +408,7 @@ class GitImplementation(GroundAPI):
         nxtid = str(newid + 1)
         with open(self.path + 'next_id.txt', 'w') as f:
             f.write(nxtid)
-        return newid
+        return str(newid)
 
     def _write_files(self, id, body, className):
         filename = self._conventional_to_readable(str(id) + '.json')
@@ -476,6 +480,29 @@ class GitImplementation(GroundAPI):
                         return True
         return False
 
+    def _map_index(self, id, sourceKey):
+        # Sloppy index: must read full file to get mapping. Make clever
+        # Also, assuming index can fit in memory
+        id = str(id)
+        ruta = self.path + 'index/'
+        with open(ruta + 'json.index.txt', 'r') as f:
+            d = json.load(f)
+        d[id] = sourceKey
+        with open(ruta + 'json.index.txt', 'w') as f:
+            json.dump(d, f)
+
+    def _read_map_index(self, id):
+        # Sloppy index: must read full file to get mapping. Make clever
+        # Also, assuming index can fit in memory
+        id = str(id)
+        ruta = self.path + 'index/'
+        with open(ruta + 'json.index.txt', 'r') as f:
+            d = json.load(f)
+        if id not in d:
+            raise KeyError(
+                "No such key in index: {}".format(id))
+        return d[id]
+
     def __run_proc__(self, bashCommand):
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
@@ -483,8 +510,9 @@ class GitImplementation(GroundAPI):
         return str(output, 'UTF-8')
 
     def _commit(self, id, className, sourcekey):
+        # Warning: Piggy-backing index file commit
         totFile = self.path + self.cls2loc[className] + self._conventional_to_readable(sourcekey + '.json')
-        self.repo.index.add([totFile])
+        self.repo.index.add([totFile, self.path + 'index/json.index.txt'])
         self.repo.index.commit("id: " + str(id) + ", class: " + className)
 
     @staticmethod
@@ -508,54 +536,72 @@ class GitImplementation(GroundAPI):
 
         ### EDGES ###
     def createEdge(self, sourceKey, fromNodeId, toNodeId, name="null", tags=None):
-        if not self._find_file(sourceKey, Edge.__name__):
+        if not self._find_file(sourceKey, Edge.__name__, "Item"):
+            fromNodeId = str(fromNodeId)
+            toNodeId = str(toNodeId)
+
+            # Enforcing some integrity constraints
+            self._read_map_index(fromNodeId)
+            self._read_map_index(toNodeId)
+
             body = self._create_item(Edge.__name__, sourceKey, name, tags)
             body["fromNodeId"] = fromNodeId
             body["toNodeId"] = toNodeId
             edge = Edge(body)
-            edgeId = edge.get_id()
-            #self.edges[sourceKey] = edge
-            #self.edges[edgeId] = edge
+            edgeId = str(edge.get_id())
             write = self._deconstruct_item(edge)
             write["fromNodeId"] = edge.get_from_node_id()
             write["toNodeId"] = edge.get_to_node_id()
-            self._write_files(edgeId, write)
-            self._commit(edgeId, Edge.__name__)
+            write = {"Item": write, "ItemVersion": {}}
+            self._write_files(sourceKey, write, Edge.__name__)
+            self._map_index(edgeId, sourceKey)
+            self._commit(edgeId, Edge.__name__, sourceKey)
         else:
-            edge = self._read_files(sourceKey, Edge.__name__)
-            edgeId = edge['id']
+            raise FileExistsError(
+                "Edge with source key '{}' already exists.".format(sourceKey))
 
-        return edgeId
+        return edge
 
     def createEdgeVersion(self, edgeId, toNodeVersionStartId, fromNodeVersionStartId, toNodeVersionEndId=None,
                           fromNodeVersionEndId=None, reference=None, referenceParameters=None, tags=None,
                           structureVersionId=None, parentIds=None):
+
+        # Missing integrity constraint checks:
+        # Passed in node versions must be versions of nodes that are linked by an edge with edgeId == edgeId
+
         body = self._get_rich_version_json(EdgeVersion.__name__, reference, referenceParameters,
                                            tags, structureVersionId, parentIds)
 
-        body["edgeId"] = edgeId
-        body["toNodeVersionStartId"] = toNodeVersionStartId
-        body["fromNodeVersionStartId"] = fromNodeVersionStartId
+        body["edgeId"] = str(edgeId)
+        body["toNodeVersionStartId"] = str(toNodeVersionStartId)
+        body["fromNodeVersionStartId"] = str(fromNodeVersionStartId)
 
-        if toNodeVersionEndId > 0:
-            body["toNodeVersionEndId"] = toNodeVersionEndId
+        if toNodeVersionEndId and int(toNodeVersionEndId) > 0:
+            body["toNodeVersionEndId"] = str(toNodeVersionEndId)
 
-        if fromNodeVersionEndId > 0:
-            body["fromNodeVersionEndId"] = fromNodeVersionEndId
+        if fromNodeVersionEndId and int(fromNodeVersionEndId) > 0:
+            body["fromNodeVersionEndId"] = str(fromNodeVersionEndId)
+
+        sourceKey = self._read_map_index(edgeId)
+        edge = self.getEdge(sourceKey)
 
         edgeVersion = EdgeVersion(body)
-        edgeVersionId = edgeVersion.get_id()
+        edgeVersionId = str(edgeVersion.get_id())
 
         #self.edgeVersions[edgeVersionId] = edgeVersion
 
         write = self._deconstruct_rich_version_json(body)
-        self._write_files(edgeVersionId, write)
-        self._commit(edgeVersionId, EdgeVersion.__name__)
+        write = {"Item": edge.to_dict(), "ItemVersion": write}
+        self._write_files(sourceKey, write, EdgeVersion.__name__)
+        self._commit(edgeVersionId, EdgeVersion.__name__, sourceKey)
 
-        return edgeVersionId
+        return edgeVersion
 
     def getEdge(self, sourceKey):
-        return self._read_files(sourceKey, Edge.__name__)
+        if not self._find_file(sourceKey, Edge.__name__, "Item"):
+            raise FileNotFoundError(
+                "Node with source key '{}' does not exist.".format(sourceKey))
+        return Edge(self._read_files(sourceKey, Edge.__name__, "Item"))
 
 
     def getEdgeLatestVersions(self, sourceKey):
@@ -593,39 +639,45 @@ class GitImplementation(GroundAPI):
         if not self._find_file(sourceKey, Node.__name__, "Item"):
             body = self._create_item(Node.__name__, sourceKey, name, tags)
             node = Node(body)
-            nodeId = node.get_item_id()
+            nodeId = str(node.get_item_id())
             write = self._deconstruct_item(node)
             write = {"Item" : write, "ItemVersion": {}}
             self._write_files(sourceKey, write, Node.__name__)
+            self._map_index(nodeId, sourceKey)
             self._commit(nodeId, Node.__name__, sourceKey)
         else:
             raise FileExistsError(
                 "Node with source key '{}' already exists.".format(sourceKey))
 
-        return nodeId
+        return node
 
     def createNodeVersion(self, nodeId, reference=None, referenceParameters=None, tags=None,
                           structureVersionId=None, parentIds=None):
         body = self._get_rich_version_json(NodeVersion.__name__, reference, referenceParameters,
                                            tags, structureVersionId, parentIds)
 
-        body["nodeId"] = nodeId
+        body["nodeId"] = str(nodeId)
+
+        sourceKey = self._read_map_index(nodeId)
+        node = self.getNode(sourceKey)
 
         nodeVersion = NodeVersion(body)
-        nodeVersionId = nodeVersion.get_id()
+        nodeVersionId = str(nodeVersion.get_id())
+
 
         write = self._deconstruct_rich_version_json(body)
-        self._write_files(nodeVersionId, write)
-        self._commit(nodeVersionId, NodeVersion.__name__)
+        write = {"Item": node.to_dict(), "ItemVersion": write}
+        self._write_files(sourceKey, write, NodeVersion.__name__)
+        self._commit(nodeVersionId, NodeVersion.__name__, sourceKey)
 
-        return nodeVersionId
+        return nodeVersion
 
 
     def getNode(self, sourceKey):
         if not self._find_file(sourceKey, Node.__name__, "Item"):
             raise FileNotFoundError(
                 "Node with source key '{}' does not exist.".format(sourceKey))
-        return self._read_files(sourceKey, Node.__name__, "Item")
+        return Node(self._read_files(sourceKey, Node.__name__, "Item"))
 
     def getNodeLatestVersions(self, sourceKey):
         nodeVersionMap = self._read_all_version(sourceKey, NodeVersion.__name__, Node.__name__)
@@ -671,7 +723,7 @@ class GitImplementation(GroundAPI):
 
     ### GRAPHS ###
     def createGraph(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, Graph.__name__):
+        if not self._find_file(sourceKey, Graph.__name__, "Item"):
             body = self._create_item(Graph.__name__, sourceKey, name, tags)
             graph = Graph(body)
             graphId = graph.get_item_id()

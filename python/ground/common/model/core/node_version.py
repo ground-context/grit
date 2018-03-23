@@ -6,7 +6,7 @@ class NodeVersion(RichVersion):
     def __init__(self, json_payload):
         super().__init__(json_payload)
 
-        self._node_id = json_payload.get('nodeId')
+        self._node_id = str(json_payload.get('nodeId'))
 
     @classmethod
     def from_node_version(cls, _id, other_node_version):

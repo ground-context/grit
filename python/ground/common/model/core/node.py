@@ -18,6 +18,18 @@ class Node(Item):
             'sourceKey': other_node.get_source_key(),
         })
 
+    def to_dict(self):
+        d =  {
+            'id': self.get_id(),
+            'class': "Node",
+            'name' : self._name,
+            'sourceKey' : self._source_key
+        }
+        if self.get_tags():
+            d['tags'] = self.get_tags()
+
+        return d
+
     def get_item_id(self):
         return self.get_id()
 
