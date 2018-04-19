@@ -219,14 +219,94 @@ class TestClient(unittest.TestCase):
 
         return edge_version
 
-
-
-
     def test_edge_version_get(self):
         pass
 
     def test_edge_version_latest_get(self):
         pass
+
+    def test_lineage_edge_create(self):
+        source_key = uuid.uuid4().hex
+        node = self.client.createLineageEdge(source_key, source_key)
+
+        self.assertTrue(
+            node is not None,
+            msg="createLineageEdge with source_key = {} returned None instead of a lineage edge"
+            .format(source_key)
+        )
+        self.assertTrue(
+            type(node) == model.usage.lineage_edge.LineageEdge,
+            msg="createLineageEdge returned node of type '{}' rather than 'LineageEdge'"
+            .format(type(node))
+        )
+        self.assertTrue(
+            source_key == node.get_source_key(),
+            msg="lineage edge created with source key {} has a differing source key: {}"
+            .format(source_key, node.get_source_key())
+        )
+
+        # now try to create the same node again
+        with self.assertRaises(FileExistsError):
+            self.client.createLineageEdge(source_key, source_key)
+
+        return node
+
+    def test_lineage_edge_get(self):
+        node = self.test_lineage_edge_create()
+
+        # I can try to get node that exists, or node that not exists
+
+        # Get node that exists
+        got_node = self.client.getLineageEdge(node.get_source_key())
+        self.assertTrue(
+            got_node is not None,
+            msg='valid call to getLineageEdge returned None'
+        )
+        self.assertTrue(
+            type(got_node) == model.usage.lineage_edge.LineageEdge,
+            msg="getLineageEdge returned node that is of type '{}' rather than 'LineageEdge'"
+            .format(type(node))
+        )
+        self.assertTrue(
+            got_node == node,
+            msg='valid call to getLineageEdge returned incorrect data'
+        )
+
+        # Get node that not exists
+        with self.assertRaises(FileNotFoundError):
+            self.client.getLineageEdge(uuid.uuid4().hex)
+
+    def test_lineage_edge_version_create(self):
+        lineage_edge = self.test_lineage_edge_create()
+        nv1 = self.test_node_version_create()
+        nv2 = self.test_node_version_create()
+
+        # I can try to create a ev for an edge that exists,
+        #   or ev for an edge that not exists
+
+        # Create an edge_version for an edge that exists
+        edge_version = self.client.createLineageEdgeVersion(lineage_edge.get_id(), nv2.get_id(), nv1.get_id())
+        self.assertTrue(
+            edge_version is not None,
+            msg='createLineageEdgeVersion with edge_id={} returned None instead of a lineage edge version'
+            .format(lineage_edge.get_id())
+        )
+        self.assertTrue(
+            type(edge_version) == model.usage.lineage_edge_version.LineageEdgeVersion,
+            msg="createLineageEdgeVersion returned edgeVersion of type '{}' rather than 'LineageEdgeVersion'"
+            .format(type(edge_version))
+        )
+        self.assertTrue(
+            edge_version.get_lineage_edge_id() == lineage_edge.get_id(),
+            msg="created edge_version's edge_id does not match id of lineage edge"
+        )
+
+        # create an edge_version for an edge that does not exist
+        with self.assertRaises(KeyError):
+            self.client.createNodeVersion(uuid.uuid4().int, nv2.get_id(),
+                                          nv1.get_id())
+
+        return edge_version
 
 
 if __name__ == '__main__':

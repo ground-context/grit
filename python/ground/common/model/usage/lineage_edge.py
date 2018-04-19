@@ -23,6 +23,17 @@ class LineageEdge(Item):
     def get_source_key(self):
         return self._source_key
 
+    def to_dict(self):
+        d = {
+            'name': self._name,
+            'id': self._id,
+            'sourceKey': self._source_key
+        }
+        if self.get_tags():
+            d['tags'] = self.get_tags()
+
+        return d
+
     def __eq__(self, other):
         return (
             isinstance(other, LineageEdge)

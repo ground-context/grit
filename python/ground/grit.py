@@ -302,7 +302,7 @@ class GroundAPI:
         raise NotImplementedError(
             "Invalid call to GroundClient.getLineageGraphVersion")
 
-class GitImplementation():
+class GitImplementation(GroundAPI):
 
     def __init__(self):
 
@@ -342,8 +342,8 @@ class GitImplementation():
         if not os.path.exists(self.path + 'next_id.txt'):
             with open(self.path + 'next_id.txt', 'w') as f:
                 f.write('0')
-        if not os.path.exists(self.path + 'index/' + 'json.index.txt'):
-            with open(self.path + 'index/' + 'json.index.txt', 'w') as f:
+        if not os.path.exists(self.path + 'index/' + 'index.json'):
+            with open(self.path + 'index/' + 'index.json', 'w') as f:
                 json.dump({}, f)
 
 
@@ -411,7 +411,7 @@ class GitImplementation():
         return str(newid)
 
     def _write_files(self, id, body, className):
-        filename = self._conventional_to_readable(str(id) + '.json')
+        filename = str(id) + '.json'
         with open(self.path + self.cls2loc[className] + filename, 'w') as f:
             json.dump(body, f)
 
@@ -419,7 +419,7 @@ class GitImplementation():
         ruta = self.path + self.cls2loc[className]
         files = [f for f in os.listdir(ruta) if os.path.isfile(os.path.join(ruta, f))]
         for file in files:
-            filename = self._readable_to_conventional(file).split('.')
+            filename = file.split('.')
             if (filename[-1] == 'json') and (filename[0] != 'ids'):
                 with open(ruta + file, 'r') as f:
                     fileDict = json.load(f)
@@ -470,7 +470,7 @@ class GitImplementation():
         ruta = self.path + self.cls2loc[className]
         files = [f for f in os.listdir(ruta) if os.path.isfile(os.path.join(ruta, f))]
         for file in files:
-            filename = self._readable_to_conventional(file).split('.')
+            filename = file.split('.')
             if (filename[-1] == 'json') and (filename[0] != 'ids'):
                 with open(ruta + file, 'r') as f:
                     fileDict = json.load(f)
@@ -485,10 +485,10 @@ class GitImplementation():
         # Also, assuming index can fit in memory
         id = str(id)
         ruta = self.path + 'index/'
-        with open(ruta + 'json.index.txt', 'r') as f:
+        with open(ruta + 'index.json', 'r') as f:
             d = json.load(f)
         d[id] = sourceKey
-        with open(ruta + 'json.index.txt', 'w') as f:
+        with open(ruta + 'index.json', 'w') as f:
             json.dump(d, f)
 
     def _read_map_index(self, id):
@@ -496,7 +496,7 @@ class GitImplementation():
         # Also, assuming index can fit in memory
         id = str(id)
         ruta = self.path + 'index/'
-        with open(ruta + 'json.index.txt', 'r') as f:
+        with open(ruta + 'index.json', 'r') as f:
             d = json.load(f)
         if id not in d:
             raise KeyError(
@@ -511,8 +511,8 @@ class GitImplementation():
 
     def _commit(self, id, className, sourcekey):
         # Warning: Piggy-backing index file commit
-        totFile = self.path + self.cls2loc[className] + self._conventional_to_readable(sourcekey + '.json')
-        self.repo.index.add([totFile, self.path + 'index/json.index.txt'])
+        totFile = self.path + self.cls2loc[className] + sourcekey + '.json'
+        self.repo.index.add([totFile, self.path + 'index/index.json'])
         self.repo.index.commit("id: " + str(id) + ", class: " + className)
 
     @staticmethod
@@ -587,8 +587,6 @@ class GitImplementation():
 
         edgeVersion = EdgeVersion(body)
         edgeVersionId = str(edgeVersion.get_id())
-
-        #self.edgeVersions[edgeVersionId] = edgeVersion
 
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": edge.to_dict(), "ItemVersion": write}
@@ -867,20 +865,20 @@ class GitImplementation():
 
     ### LINEAGE EDGES ###
     def createLineageEdge(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, LineageEdge.__name__):
+        if not self._find_file(sourceKey, LineageEdge.__name__, "Item"):
             body = self._create_item(LineageEdge.__name__, sourceKey, name, tags)
             lineageEdge = LineageEdge(body)
-            lineageEdgeId = lineageEdge.get_id()
-            #self.lineageEdges[sourceKey] = lineageEdge
-            #self.lineageEdges[lineageEdgeId] = lineageEdge
+            lineageEdgeId = str(lineageEdge.get_id())
             write = self._deconstruct_item(lineageEdge)
-            self._write_files(lineageEdgeId, write)
-            self._commit(lineageEdgeId, LineageEdge.__name__)
+            write =  {"Item" : write, "ItemVersion": {}}
+            self._write_files(sourceKey, write, LineageEdge.__name__)
+            self._map_index(lineageEdgeId, sourceKey)
+            self._commit(lineageEdgeId, LineageEdge.__name__, sourceKey)
         else:
-            lineageEdge = self._read_files(sourceKey, LineageEdge.__name__)
-            lineageEdgeId = lineageEdge['id']
+            raise FileExistsError(
+                "Lineage Edge with source key '{}' already exists.".format(sourceKey))
 
-        return lineageEdgeId
+        return lineageEdge
 
 
     def createLineageEdgeVersion(self, lineageEdgeId, toRichVersionId, fromRichVersionId, reference=None,
@@ -892,19 +890,25 @@ class GitImplementation():
         body["toRichVersionId"] = toRichVersionId
         body["fromRichVersionId"] = fromRichVersionId
 
-        lineageEdgeVersion = LineageEdgeVersion(body)
-        lineageEdgeVersionId = lineageEdgeVersion.get_id()
+        sourceKey = self._read_map_index(lineageEdgeId)
+        lineage_edge = self.getLineageEdge(sourceKey)
 
-        #self.lineageEdgeVersions[lineageEdgeVersionId] = lineageEdgeVersion
+        lineageEdgeVersion = LineageEdgeVersion(body)
+        lineageEdgeVersionId = str(lineageEdgeVersion.get_id())
 
         write = self._deconstruct_rich_version_json(body)
-        self._write_files(lineageEdgeVersionId, write)
-        self._commit(lineageEdgeVersionId, LineageEdgeVersion.__name__)
+        write = {"Item": lineage_edge.to_dict(), "ItemVersion": write}
+        self._write_files(sourceKey, write, LineageEdgeVersion.__name__)
+        self._commit(lineageEdgeVersionId, LineageEdgeVersion.__name__, sourceKey)
 
-        return lineageEdgeVersionId
+        return lineageEdgeVersion
 
     def getLineageEdge(self, sourceKey):
-        return self._read_files(sourceKey, LineageEdge.__name__)
+        if not self._find_file(sourceKey, LineageEdge.__name__, "Item"):
+            raise FileNotFoundError(
+                "Lineage Edge with source key '{}' does not exist".format(sourceKey))
+
+        return LineageEdge(self._read_files(sourceKey, LineageEdge.__name__, "Item"))
 
     def getLineageEdgeLatestVersions(self, sourceKey):
         lineageEdgeVersionMap = self._read_all_version(sourceKey, LineageEdgeVersion.__name__, LineageEdge.__name__)
