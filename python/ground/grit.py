@@ -427,12 +427,10 @@ class GitImplementation(GroundAPI):
         files = [f for f in os.listdir(ruta) if os.path.isfile(os.path.join(ruta, f))]
         for file in files:
             filename = file.split('.')
-            if (filename[-1] == 'json') and (filename[0] != 'ids'):
+            if (filename[-1] == 'json') and (filename[0] == sourceKey) :
                 with open(ruta + file, 'r') as f:
                     fileDict = json.load(f)
                     fileDict = fileDict[layer]
-                if (('sourceKey' in fileDict) and (fileDict['sourceKey'] == sourceKey)
-                    and (fileDict['class'] == className)):
                     return fileDict
 
     def _read_version(self, id, className):
@@ -738,11 +736,8 @@ class GitImplementation(GroundAPI):
         for commit, id in commits:
             if id == int(nodeVersionId):
                 with gizzard.chinto(globals.GRIT_D):
-                    p2 = subprocess.Popen(['git', 'checkout', commit], stdout=subprocess.PIPE)
-                    p2.wait()
-                    readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
-                    p3 = subprocess.Popen(['git', 'checkout', 'master'], stdout=subprocess.PIPE)
-                    p3.wait()
+                    with gizzard.chkinto(commit):
+                        readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
                     nv = NodeVersion(readfiles)
                 return nv
         raise RuntimeError("Reached invalid line in getNodeVersion")

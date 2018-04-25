@@ -21,17 +21,26 @@ class chkinto(object):
         self.target = commit
 
     def __enter__(self):
-        subprocess.Popen(['git', 'checkout', self.target], stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(['git', 'checkout', self.target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        p1.wait()
+        p1.terminate()
+        p1.wait()
 
     def __exit__(self, type, value, traceback):
-        subprocess.Popen(['git', 'checkout', 'master'], stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(['git', 'checkout', 'master'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        p1.wait()
+        p1.terminate()
+        p1.wait()
 
 def gitlog(sourceKey, typ):
     typ = typ.lower()
     ld = []
     with chinto(globals.GRIT_D):
-        p1 = subprocess.Popen(['git', 'log', '--follow', '--', typ+'/'+sourceKey+'.json'], stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(['git', 'log', '--follow', '--', typ+'/'+sourceKey+'.json'], stdout=subprocess.PIPE,  stderr=subprocess.DEVNULL)
         rawgitlog = str(p1.stdout.read(), 'UTF-8').split('\n')
+        p1.stdout.close()
+        p1.terminate()
+        p1.wait()
         d = {}
         for line in rawgitlog:
             if 'commit' in line[0:6]:
@@ -46,7 +55,6 @@ def gitlog(sourceKey, typ):
                 d['class'] = line[3]
                 ld.append(d)
                 d = {}
-        p1.wait()
     return ld
 
 def get_ver_commits(sourceKey, typ):
