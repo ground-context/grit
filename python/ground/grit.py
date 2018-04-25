@@ -5,6 +5,7 @@ import numpy as np
 import os
 import git
 import subprocess
+import time
 from shutil import copyfile
 # noinspection PyUnresolvedReferences
 from ground.common.model.core.node import Node
@@ -32,6 +33,9 @@ from ground.common.model.usage.lineage_graph import LineageGraph
 from ground.common.model.usage.lineage_graph_version import LineageGraphVersion
 # noinspection PyUnresolvedReferences
 from ground.common.model.version.tag import Tag
+
+from . import globals
+from . import gizzard
 
 """
 Abstract class: do not instantiate
@@ -307,7 +311,7 @@ class GitImplementation(GroundAPI):
     def __init__(self):
 
         self._items = ['edge', 'graph', 'node', 'structure', 'lineage_edge', 'lineage_graph', 'index']
-        self.path = os.path.expanduser('~') + "/grit.d/"
+        self.path = globals.GRIT_D
 
         self.cls2loc = {
             'Edge' : 'edge/',
@@ -344,6 +348,9 @@ class GitImplementation(GroundAPI):
                 f.write('0')
         if not os.path.exists(self.path + 'index/' + 'index.json'):
             with open(self.path + 'index/' + 'index.json', 'w') as f:
+                json.dump({}, f)
+        if not os.path.exists(self.path + 'index/index_version.json'):
+            with open(self.path + 'index/index_version.json', 'w') as f:
                 json.dump({}, f)
 
 
@@ -424,9 +431,9 @@ class GitImplementation(GroundAPI):
                 with open(ruta + file, 'r') as f:
                     fileDict = json.load(f)
                     fileDict = fileDict[layer]
-                    if (('sourceKey' in fileDict) and (fileDict['sourceKey'] == sourceKey)
-                        and (fileDict['class'] == className)):
-                        return fileDict
+                if (('sourceKey' in fileDict) and (fileDict['sourceKey'] == sourceKey)
+                    and (fileDict['class'] == className)):
+                    return fileDict
 
     def _read_version(self, id, className):
         files = [f for f in os.listdir(self.path) if os.path.isfile(os.path.join(self.path, f))]
@@ -491,12 +498,32 @@ class GitImplementation(GroundAPI):
         with open(ruta + 'index.json', 'w') as f:
             json.dump(d, f)
 
+    def _map_version_index(self, id, sourceKey):
+        id = str(id)
+        ruta = self.path + 'index/'
+        with open(ruta + 'index_version.json', 'r') as f:
+            d = json.load(f)
+        d[id] = sourceKey
+        with open(ruta + 'index_version.json', 'w') as f:
+            json.dump(d, f)
+
+
     def _read_map_index(self, id):
         # Sloppy index: must read full file to get mapping. Make clever
         # Also, assuming index can fit in memory
         id = str(id)
         ruta = self.path + 'index/'
         with open(ruta + 'index.json', 'r') as f:
+            d = json.load(f)
+        if id not in d:
+            raise KeyError(
+                "No such key in index: {}".format(id))
+        return d[id]
+
+    def _read_map_version_index(self, id):
+        id = str(id)
+        ruta = self.path + 'index/'
+        with open(ruta + 'index_version.json', 'r') as f:
             d = json.load(f)
         if id not in d:
             raise KeyError(
@@ -512,7 +539,7 @@ class GitImplementation(GroundAPI):
     def _commit(self, id, className, sourcekey):
         # Warning: Piggy-backing index file commit
         totFile = self.path + self.cls2loc[className] + sourcekey + '.json'
-        self.repo.index.add([totFile, self.path + 'index/index.json'])
+        self.repo.index.add([totFile, self.path + 'index/index.json', self.path + 'index/index_version.json'])
         self.repo.index.commit("id: " + str(id) + ", class: " + className)
 
     @staticmethod
@@ -666,6 +693,7 @@ class GitImplementation(GroundAPI):
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": node.to_dict(), "ItemVersion": write}
         self._write_files(sourceKey, write, NodeVersion.__name__)
+        self._map_version_index(nodeVersionId, sourceKey)
         self._commit(nodeVersionId, NodeVersion.__name__, sourceKey)
 
         return nodeVersion
@@ -705,7 +733,20 @@ class GitImplementation(GroundAPI):
         return parentChild
 
     def getNodeVersion(self, nodeVersionId):
-        return self._read_version(nodeVersionId, NodeVersion.__name__)
+        sourceKey = self._read_map_version_index(nodeVersionId)
+        commits = [i for i in gizzard.get_ver_commits(sourceKey, 'node')]
+        for commit, id in commits:
+            if id == int(nodeVersionId):
+                with gizzard.chinto(globals.GRIT_D):
+                    p2 = subprocess.Popen(['git', 'checkout', commit], stdout=subprocess.PIPE)
+                    p2.wait()
+                    readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
+                    p3 = subprocess.Popen(['git', 'checkout', 'master'], stdout=subprocess.PIPE)
+                    p3.wait()
+                    nv = NodeVersion(readfiles)
+                return nv
+        raise RuntimeError("Reached invalid line in getNodeVersion")
+
 
 
     def getNodeVersionAdjacentLineage(self, nodeVersionId):

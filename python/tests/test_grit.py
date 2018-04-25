@@ -115,7 +115,34 @@ class TestClient(unittest.TestCase):
         return node_version
 
     def test_node_version_get(self):
-        pass
+        node = self.test_node_create()
+
+        nv1 = self.client.createNodeVersion(node.get_id())
+        nv2 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id()])
+        nv3 = self.client.createNodeVersion(node.get_id(), parentIds=[nv2.get_id()])
+
+        node_version = self.client.getNodeVersion(nv2.get_id())
+
+        self.assertTrue(
+            node_version is not None,
+            msg='getNodeVersion with node_id={} returned None instead of a node version'
+            .format(node.get_id())
+        )
+        self.assertTrue(
+            type(node_version) == model.core.node_version.NodeVersion,
+            msg="getNodeVersion returned nodeVersion of type '{}' rather than 'NodeVersion'"
+            .format(type(node_version))
+        )
+        self.assertTrue(
+            node_version.get_node_id() == node.get_id(),
+            msg="getNodeVersion's node_id does not match id of node"
+        )
+        self.assertTrue(
+            node_version == nv2,
+            msg="Stored and retrieved node versions mismatch"
+        )
+
+        return node, nv1, nv2, nv3
 
     def test_node_version_latest_get(self):
         pass
