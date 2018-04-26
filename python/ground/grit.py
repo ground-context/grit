@@ -330,19 +330,8 @@ class GitImplementation(GroundAPI):
 
         if not os.path.isdir(self.path):
             os.mkdir(self.path)
-            self.repo = git.Repo.init(self.path)
-
             for item in self._items:
                 os.mkdir(self.path + item)
-
-            if not os.path.exists(self.path + '.gitignore'):
-                with open(self.path + '.gitignore', 'w') as f:
-                    f.write('next_id.txt\n')
-
-            self.repo.index.add([self.path + name for name in ['.gitignore',] + self._items])
-            self.repo.index.commit("Initialize Ground GitImplementation repository")
-        else:
-            self.repo = git.Repo(self.path)
         if not os.path.exists(self.path + 'next_id.txt'):
             with open(self.path + 'next_id.txt', 'w') as f:
                 f.write('0')
@@ -417,21 +406,34 @@ class GitImplementation(GroundAPI):
             f.write(nxtid)
         return str(newid)
 
-    def _write_files(self, id, body, className):
-        filename = str(id) + '.json'
-        with open(self.path + self.cls2loc[className] + filename, 'w') as f:
+    def _write_files(self, sourceKey, body, className):
+        sourceKey = str(sourceKey)
+        filename = sourceKey + '.json'
+        route = os.path.join(self.path + self.cls2loc[className], sourceKey)
+
+        if os.path.isdir(route):
+            repo = git.Repo(route)
+        else:
+            repo = git.Repo.init(route)
+
+        with open(os.path.join(route, filename), 'w') as f:
             json.dump(body, f)
 
+        repo.index.add([os.path.join(route, filename)])
+
+        if 'Version' in className:
+            repo.index.commit("id: {}, class: {}".format(body["ItemVersion"]["id"], className))
+        else:
+            repo.index.commit("id: {}, class: {}".format(body["Item"]["id"], className))
+
+
     def _read_files(self, sourceKey, className, layer):
-        ruta = self.path + self.cls2loc[className]
-        files = [f for f in os.listdir(ruta) if os.path.isfile(os.path.join(ruta, f))]
-        for file in files:
-            filename = file.split('.')
-            if (filename[-1] == 'json') and (filename[0] == sourceKey) :
-                with open(ruta + file, 'r') as f:
-                    fileDict = json.load(f)
-                    fileDict = fileDict[layer]
-                    return fileDict
+        route = os.path.join(self.path + self.cls2loc[className], sourceKey)
+        with open(os.path.join(route, sourceKey + '.json'), 'r') as f:
+            fileDict = json.load(f)
+            fileDict = fileDict[layer]
+            return fileDict
+
 
     def _read_version(self, id, className):
         files = [f for f in os.listdir(self.path) if os.path.isfile(os.path.join(self.path, f))]
@@ -471,19 +473,9 @@ class GitImplementation(GroundAPI):
                         versions[fileDict['id']] = fileDict
         return versions
 
-    def _find_file(self, sourceKey, className, layer):
-        ruta = self.path + self.cls2loc[className]
-        files = [f for f in os.listdir(ruta) if os.path.isfile(os.path.join(ruta, f))]
-        for file in files:
-            filename = file.split('.')
-            if (filename[-1] == 'json') and (filename[0] != 'ids'):
-                with open(ruta + file, 'r') as f:
-                    fileDict = json.load(f)
-                    fileDict = fileDict[layer]
-                    if (('sourceKey' in fileDict) and (fileDict['sourceKey'] == sourceKey)
-                        and (fileDict['class'] == className)):
-                        return True
-        return False
+    def _find_file(self, sourceKey, className):
+        ruta = os.path.join(self.path + self.cls2loc[className], sourceKey)
+        return os.path.isdir(ruta)
 
     def _map_index(self, id, sourceKey):
         # Sloppy index: must read full file to get mapping. Make clever
@@ -561,7 +553,7 @@ class GitImplementation(GroundAPI):
 
         ### EDGES ###
     def createEdge(self, sourceKey, fromNodeId, toNodeId, name="null", tags=None):
-        if not self._find_file(sourceKey, Edge.__name__, "Item"):
+        if not self._find_file(sourceKey, Edge.__name__):
             fromNodeId = str(fromNodeId)
             toNodeId = str(toNodeId)
 
@@ -580,7 +572,6 @@ class GitImplementation(GroundAPI):
             write = {"Item": write, "ItemVersion": {}}
             self._write_files(sourceKey, write, Edge.__name__)
             self._map_index(edgeId, sourceKey)
-            self._commit(edgeId, Edge.__name__, sourceKey)
         else:
             raise FileExistsError(
                 "Edge with source key '{}' already exists.".format(sourceKey))
@@ -616,12 +607,11 @@ class GitImplementation(GroundAPI):
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": edge.to_dict(), "ItemVersion": write}
         self._write_files(sourceKey, write, EdgeVersion.__name__)
-        self._commit(edgeVersionId, EdgeVersion.__name__, sourceKey)
 
         return edgeVersion
 
     def getEdge(self, sourceKey):
-        if not self._find_file(sourceKey, Edge.__name__, "Item"):
+        if not self._find_file(sourceKey, Edge.__name__):
             raise FileNotFoundError(
                 "Node with source key '{}' does not exist.".format(sourceKey))
         return Edge(self._read_files(sourceKey, Edge.__name__, "Item"))
@@ -659,7 +649,7 @@ class GitImplementation(GroundAPI):
 
     ### NODES ###
     def createNode(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, Node.__name__, "Item"):
+        if not self._find_file(sourceKey, Node.__name__):
             body = self._create_item(Node.__name__, sourceKey, name, tags)
             node = Node(body)
             nodeId = str(node.get_item_id())
@@ -667,7 +657,6 @@ class GitImplementation(GroundAPI):
             write = {"Item" : write, "ItemVersion": {}}
             self._write_files(sourceKey, write, Node.__name__)
             self._map_index(nodeId, sourceKey)
-            self._commit(nodeId, Node.__name__, sourceKey)
         else:
             raise FileExistsError(
                 "Node with source key '{}' already exists.".format(sourceKey))
@@ -687,18 +676,16 @@ class GitImplementation(GroundAPI):
         nodeVersion = NodeVersion(body)
         nodeVersionId = str(nodeVersion.get_id())
 
-
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": node.to_dict(), "ItemVersion": write}
         self._write_files(sourceKey, write, NodeVersion.__name__)
         self._map_version_index(nodeVersionId, sourceKey)
-        self._commit(nodeVersionId, NodeVersion.__name__, sourceKey)
 
         return nodeVersion
 
 
     def getNode(self, sourceKey):
-        if not self._find_file(sourceKey, Node.__name__, "Item"):
+        if not self._find_file(sourceKey, Node.__name__):
             raise FileNotFoundError(
                 "Node with source key '{}' does not exist.".format(sourceKey))
         return Node(self._read_files(sourceKey, Node.__name__, "Item"))
@@ -735,7 +722,7 @@ class GitImplementation(GroundAPI):
         commits = [i for i in gizzard.get_ver_commits(sourceKey, 'node')]
         for commit, id in commits:
             if id == int(nodeVersionId):
-                with gizzard.chinto(globals.GRIT_D):
+                with gizzard.chinto(os.path.join(globals.GRIT_D, 'node', sourceKey)):
                     with gizzard.chkinto(commit):
                         readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
                     nv = NodeVersion(readfiles)
@@ -901,7 +888,7 @@ class GitImplementation(GroundAPI):
 
     ### LINEAGE EDGES ###
     def createLineageEdge(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, LineageEdge.__name__, "Item"):
+        if not self._find_file(sourceKey, LineageEdge.__name__):
             body = self._create_item(LineageEdge.__name__, sourceKey, name, tags)
             lineageEdge = LineageEdge(body)
             lineageEdgeId = str(lineageEdge.get_id())
@@ -909,7 +896,6 @@ class GitImplementation(GroundAPI):
             write =  {"Item" : write, "ItemVersion": {}}
             self._write_files(sourceKey, write, LineageEdge.__name__)
             self._map_index(lineageEdgeId, sourceKey)
-            self._commit(lineageEdgeId, LineageEdge.__name__, sourceKey)
         else:
             raise FileExistsError(
                 "Lineage Edge with source key '{}' already exists.".format(sourceKey))
@@ -935,12 +921,11 @@ class GitImplementation(GroundAPI):
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": lineage_edge.to_dict(), "ItemVersion": write}
         self._write_files(sourceKey, write, LineageEdgeVersion.__name__)
-        self._commit(lineageEdgeVersionId, LineageEdgeVersion.__name__, sourceKey)
 
         return lineageEdgeVersion
 
     def getLineageEdge(self, sourceKey):
-        if not self._find_file(sourceKey, LineageEdge.__name__, "Item"):
+        if not self._find_file(sourceKey, LineageEdge.__name__):
             raise FileNotFoundError(
                 "Lineage Edge with source key '{}' does not exist".format(sourceKey))
 

@@ -35,8 +35,8 @@ class chkinto(object):
 def gitlog(sourceKey, typ):
     typ = typ.lower()
     ld = []
-    with chinto(globals.GRIT_D):
-        p1 = subprocess.Popen(['git', 'log', '--follow', '--', typ+'/'+sourceKey+'.json'], stdout=subprocess.PIPE,  stderr=subprocess.DEVNULL)
+    with chinto(os.path.join(globals.GRIT_D, typ, sourceKey)):
+        p1 = subprocess.Popen(['git', 'log', '--follow', '--', sourceKey+'.json'], stdout=subprocess.PIPE,  stderr=subprocess.DEVNULL)
         rawgitlog = str(p1.stdout.read(), 'UTF-8').split('\n')
         p1.stdout.close()
         p1.terminate()
