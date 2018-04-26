@@ -2,6 +2,9 @@
 
 import subprocess
 import os
+import uuid
+
+from typing import List
 
 from . import globals
 
@@ -35,12 +38,8 @@ class chkinto(object):
 def gitlog(sourceKey, typ):
     typ = typ.lower()
     ld = []
-    with chinto(os.path.join(globals.GRIT_D, typ, sourceKey)):
-        p1 = subprocess.Popen(['git', 'log', '--follow', '--', sourceKey+'.json'], stdout=subprocess.PIPE,  stderr=subprocess.DEVNULL)
-        rawgitlog = str(p1.stdout.read(), 'UTF-8').split('\n')
-        p1.stdout.close()
-        p1.terminate()
-        p1.wait()
+    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
+        rawgitlog = readProc(['git', 'log', '--all'])
         d = {}
         for line in rawgitlog:
             if 'commit' in line[0:6]:
@@ -58,7 +57,60 @@ def gitlog(sourceKey, typ):
     return ld
 
 def get_ver_commits(sourceKey, typ):
+
     ld = gitlog(sourceKey, typ)
     return list(map(lambda x: (x['commit'], x['id']),
                     filter(lambda x: 'Version' in x['class'],
                            ld)))
+
+def get_commits(sourceKey, typ):
+    ld = gitlog(sourceKey, typ)
+    return list(map(lambda x: (x['commit'], x['id']), ld))
+
+def get_branch_commits(sourceKey, typ):
+    # Warning: returns iterator not list (not subscriptable)
+    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
+        def clean(s):
+            s = s.strip()
+            if '* ' in s:
+                s = s[2:]
+            return s
+        branches = [i for i in map(clean, readProc(['git', 'branch'])) if i]
+        commits = [i for i in readProc(['git', 'rev-parse', '--branches']) if i]
+
+    return zip(branches, commits)
+
+
+def new_branch_name(sourceKey, typ):
+    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
+        rawgitlog = readProc(['git', 'branch'])
+        new_name = uuid.uuid4().hex
+        while new_name in rawgitlog:
+            new_name = uuid.uuid4().hex
+
+    return new_name
+
+def runProc(commands: List):
+    p1 = subprocess.Popen(commands, stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL)
+    p1.wait()
+    p1.terminate()
+    p1.wait()
+
+def readProc(commands: List):
+    p1 = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    rawgitlog = str(p1.stdout.read(), 'UTF-8').split('\n')
+    p1.wait()
+    p1.stdout.close()
+    p1.terminate()
+    p1.wait()
+    return rawgitlog
+
+def runThere(commands: List, sourceKey, typ):
+    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
+        runProc(commands)
+
+def readThere(commands: List, sourceKey, typ):
+    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
+        out = readProc(commands)
+    return out

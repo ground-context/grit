@@ -315,17 +315,29 @@ class GitImplementation(GroundAPI):
 
         self.cls2loc = {
             'Edge' : 'edge/',
+            'edge': 'edge/',
             'EdgeVersion' : 'edge/',
+            'edgeversion': 'edge/',
             'Graph' : 'graph/',
+            'graph': 'graph/',
             'GraphVersion' : 'graph/',
+            'graphversion': 'graph',
             'Node' : 'node/',
+            'node': 'node/',
             'NodeVersion' : 'node/',
+            'nodeversion': 'nodeversion/',
             'Structure' : 'structure/',
+            'structure' : 'structure/',
             'StructureVersion' : 'structure/',
+            'structureversion' : 'structure/',
             'LineageEdge' : 'lineage_edge/',
+            'lineageedge' : 'lineage_edge/',
             'LineageEdgeVersion' : 'lineage_edge/',
+            'lineageedgeversion' : 'lineage_edge/',
             'LineageGraph' : 'lineage_graph/',
-            'LineageGraphVersion' : 'lineage_graph/'
+            'lineagegraph' : 'lineage_graph/',
+            'LineageGraphVersion' : 'lineage_graph/',
+            'lineagegraphversion' : 'lineage_graph/'
         }
 
         if not os.path.isdir(self.path):
@@ -415,6 +427,43 @@ class GitImplementation(GroundAPI):
             repo = git.Repo(route)
         else:
             repo = git.Repo.init(route)
+
+        # Set the repo to the git commit that after processing represents the parents of this node version
+        # Cases0: No parent
+        # Case1: One parent
+        # Case2: Octopus merge https://stackoverflow.com/questions/5292184/merging-multiple-branches-with-git
+
+        if 'Version' in className:
+            vbody = body['ItemVersion']
+
+            parents = []
+            if 'parentIds' in vbody:
+                parents = vbody['parentIds']
+
+            if parents is None or len(parents) == 0:
+                # Get root/first commit
+                commit, id = gizzard.get_commits(sourceKey, self.cls2loc[className])[-1]
+                detached_head = True
+
+                for branch, commit_of_branch in gizzard.get_branch_commits(sourceKey, self.cls2loc[className]):
+                    if commit_of_branch == commit:
+                        gizzard.runThere(['git', 'checkout', branch], sourceKey, self.cls2loc[className])
+                        detached_head = False
+                        break
+
+                if detached_head:
+                    gizzard.runThere(['git', 'checkout', commit], sourceKey, self.cls2loc[className])
+                    new_name = gizzard.new_branch_name(sourceKey, self.cls2loc[className])
+                    gizzard.runThere(['git', 'checkout', '-b', new_name], sourceKey, self.cls2loc[className])
+
+                # assert: Now at branch with head attached to first commit
+            elif len(parents) == 1:
+                pass
+            elif len(parents) == 2:
+                pass
+            else:
+                pass
+
 
         with open(os.path.join(route, filename), 'w') as f:
             json.dump(body, f)
