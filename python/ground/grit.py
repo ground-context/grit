@@ -458,11 +458,43 @@ class GitImplementation(GroundAPI):
 
                 # assert: Now at branch with head attached to first commit
             elif len(parents) == 1:
-                pass
-            elif len(parents) == 2:
-                pass
+                commit = gizzard.id_to_commit(parents[0], sourceKey, self.cls2loc[className])
+                detached_head = True
+
+                for branch, commit_of_branch in gizzard.get_branch_commits(sourceKey, self.cls2loc[className]):
+                    if commit_of_branch == commit:
+                        gizzard.runThere(['git', 'checkout', branch], sourceKey, self.cls2loc[className])
+                        detached_head = False
+                        break
+
+                if detached_head:
+                    gizzard.runThere(['git', 'checkout', commit], sourceKey, self.cls2loc[className])
+                    new_name = gizzard.new_branch_name(sourceKey, self.cls2loc[className])
+                    gizzard.runThere(['git', 'checkout', '-b', new_name], sourceKey, self.cls2loc[className])
+
+                # assert: Now at branch with head attached to some commit
             else:
-                pass
+                commits = [gizzard.id_to_commit(p, sourceKey, self.cls2loc[className]) for p in parents]
+                branches = []
+
+                for commit in commits:
+                    detached_head = True
+
+                    for branch, commit_of_branch in gizzard.get_branch_commits(sourceKey, self.cls2loc[className]):
+                        if commit_of_branch == commit:
+                            gizzard.runThere(['git', 'checkout', branch], sourceKey, self.cls2loc[className])
+                            detached_head = False
+                            branches.append(branch)
+                            break
+
+                    if detached_head:
+                        gizzard.runThere(['git', 'checkout', commit], sourceKey, self.cls2loc[className])
+                        new_name = gizzard.new_branch_name(sourceKey, self.cls2loc[className])
+                        gizzard.runThere(['git', 'checkout', '-b', new_name], sourceKey, self.cls2loc[className])
+                        branches.append(new_name)
+
+                gizzard.runThere(['git', 'merge', '-s', 'ours', '-m', 'id: -1, class: Merge'] + branches[0:-1],
+                                 sourceKey, self.cls2loc[className])
 
 
         with open(os.path.join(route, filename), 'w') as f:

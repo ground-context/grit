@@ -22,6 +22,7 @@ class chinto(object):
 class chkinto(object):
     def __init__(self, commit):
         self.target = commit
+        self.currentBranch = __get_current_branch__()
 
     def __enter__(self):
         p1 = subprocess.Popen(['git', 'checkout', self.target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -30,7 +31,7 @@ class chkinto(object):
         p1.wait()
 
     def __exit__(self, type, value, traceback):
-        p1 = subprocess.Popen(['git', 'checkout', 'master'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        p1 = subprocess.Popen(['git', 'checkout', self.currentBranch], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         p1.wait()
         p1.terminate()
         p1.wait()
@@ -38,8 +39,8 @@ class chkinto(object):
 def gitlog(sourceKey, typ):
     typ = typ.lower()
     ld = []
-    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
-        rawgitlog = readProc(['git', 'log', '--all'])
+    with chinto(os.path.join(globals.GRIT_D, typ, sourceKey)):
+        rawgitlog = __readProc__(['git', 'log', '--all'])
         d = {}
         for line in rawgitlog:
             if 'commit' in line[0:6]:
@@ -69,35 +70,45 @@ def get_commits(sourceKey, typ):
 
 def get_branch_commits(sourceKey, typ):
     # Warning: returns iterator not list (not subscriptable)
-    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
+    with chinto(os.path.join(globals.GRIT_D, typ, sourceKey)):
         def clean(s):
             s = s.strip()
             if '* ' in s:
                 s = s[2:]
             return s
-        branches = [i for i in map(clean, readProc(['git', 'branch'])) if i]
-        commits = [i for i in readProc(['git', 'rev-parse', '--branches']) if i]
+        branches = [i for i in map(clean, __readProc__(['git', 'branch'])) if i]
+        commits = [i for i in __readProc__(['git', 'rev-parse', '--branches']) if i]
 
     return zip(branches, commits)
 
+def id_to_commit(id, sourcekey, typ):
+    for commit, id2 in get_ver_commits(sourcekey, typ):
+        if int(id2) == int(id):
+            return commit
+
+def __get_current_branch__():
+    def split(s):
+        s = s.strip()
+        return s.split()
+    return [i for i in map(split, __readProc__(['git', 'branch'])) if len(i) == 2][0][1]
 
 def new_branch_name(sourceKey, typ):
-    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
-        rawgitlog = readProc(['git', 'branch'])
+    with chinto(os.path.join(globals.GRIT_D, typ, sourceKey)):
+        rawgitlog = __readProc__(['git', 'branch'])
         new_name = uuid.uuid4().hex
         while new_name in rawgitlog:
             new_name = uuid.uuid4().hex
 
     return new_name
 
-def runProc(commands: List):
+def __runProc__(commands: List):
     p1 = subprocess.Popen(commands, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL)
     p1.wait()
     p1.terminate()
     p1.wait()
 
-def readProc(commands: List):
+def __readProc__(commands: List):
     p1 = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     rawgitlog = str(p1.stdout.read(), 'UTF-8').split('\n')
     p1.wait()
@@ -107,10 +118,10 @@ def readProc(commands: List):
     return rawgitlog
 
 def runThere(commands: List, sourceKey, typ):
-    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
-        runProc(commands)
+    with chinto(os.path.join(globals.GRIT_D, typ, sourceKey)):
+        __runProc__(commands)
 
 def readThere(commands: List, sourceKey, typ):
-    with chinto(os.path.join(globals.GRIT_D + typ, sourceKey)):
-        out = readProc(commands)
+    with chinto(os.path.join(globals.GRIT_D, typ, sourceKey)):
+        out = __readProc__(commands)
     return out

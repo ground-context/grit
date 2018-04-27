@@ -114,7 +114,6 @@ class TestClient(unittest.TestCase):
         # Total: created two distinct node versions for the same node.
         return node_version
 
-    @unittest.skip
     def test_node_version_get_chain(self):
         node = self.test_node_create()
 
