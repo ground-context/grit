@@ -428,11 +428,6 @@ class GitImplementation(GroundAPI):
         else:
             repo = git.Repo.init(route)
 
-        # Set the repo to the git commit that after processing represents the parents of this node version
-        # Cases0: No parent
-        # Case1: One parent
-        # Case2: Octopus merge https://stackoverflow.com/questions/5292184/merging-multiple-branches-with-git
-
         if 'Version' in className:
             vbody = body['ItemVersion']
 
@@ -496,7 +491,6 @@ class GitImplementation(GroundAPI):
                 gizzard.runThere(['git', 'merge', '-s', 'ours', '-m', 'id: -1, class: Merge'] + branches[0:-1],
                                  sourceKey, self.cls2loc[className])
                 gizzard.runThere(['git', 'branch', '-D'] + branches[0:-1], sourceKey, self.cls2loc[className])
-
 
         with open(os.path.join(route, filename), 'w') as f:
             json.dump(body, f)
@@ -773,16 +767,13 @@ class GitImplementation(GroundAPI):
         return Node(self._read_files(sourceKey, Node.__name__, "Item"))
 
     def getNodeLatestVersions(self, sourceKey):
-        nodeVersionMap = self._read_all_version(sourceKey, NodeVersion.__name__, Node.__name__)
-        nodeVersions = set(list(nodeVersionMap.keys()))
-        is_parent = set([])
-        for evId in nodeVersions:
-            ev = nodeVersionMap[evId]
-            if ('parentIds' in ev) and (ev['parentIds']):
-                assert type(ev['parentIds']) == list
-                for parentId in ev['parentIds']:
-                    is_parent |= {parentId, }
-        return [nodeVersionMap[Id] for Id in list(nodeVersions - is_parent)]
+        latest_versions = []
+        for branch, commit in gizzard.get_branch_commits(sourceKey, 'node'):
+            gizzard.runThere(['git', 'checkout', branch], sourceKey, 'node')
+            readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
+            nv = NodeVersion(readfiles)
+            latest_versions.append(nv)
+        return latest_versions
 
     def getNodeHistory(self, sourceKey):
         nodeVersionMap = self._read_all_version(sourceKey, NodeVersion.__name__, Node.__name__)

@@ -235,7 +235,7 @@ class TestClient(unittest.TestCase):
 
         nv4 = self.client.createNodeVersion(node.get_id(), parentIds=[nv2.get_id(), nv3.get_id()])
         nv5 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
-        nv6 = self.client.createNodeVersion(node.get_id(), parentIds=[nv2.get_id(), nv3.get_id(), nv4.get_id()])
+        nv6 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
 
         node_version = self.client.getNodeVersion(nv2.get_id())
 
@@ -344,7 +344,48 @@ class TestClient(unittest.TestCase):
 
 
     def test_node_version_latest_get(self):
-        pass
+        node = self.test_node_create()
+
+        nv1 = self.client.createNodeVersion(node.get_id())
+        nv2 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id()])
+        nv3 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id()])
+
+        nv4 = self.client.createNodeVersion(node.get_id(), parentIds=[nv2.get_id(), nv3.get_id()])
+        nv5 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
+        nv6 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
+
+        node_versions = self.client.getNodeLatestVersions(node.get_source_key())
+
+        for node_version in node_versions:
+            self.assertTrue(
+                node_version is not None,
+                msg='getNodeLatestVersions with node_id={} returned None instead of a node version'
+                .format(node.get_id())
+            )
+            self.assertTrue(
+                type(node_version) == model.core.node_version.NodeVersion,
+                msg="getNodeLatestVersions returned nodeVersion of type '{}' rather than 'NodeVersion'"
+                .format(type(node_version))
+            )
+            self.assertTrue(
+                node_version.get_node_id() == node.get_id(),
+                msg="getNodeLatestVersions node_id does not match id of node"
+            )
+            self.assertTrue(
+                node_version == nv5 or node_version == nv6,
+                msg="Stored and retrieved node versions mismatch"
+            )
+        self.assertTrue(
+            len(node_versions) == 2,
+            msg='getNodeLatestVersions returned {} node versions but there are 2 latest.'
+                .format(len(node_versions))
+        )
+        self.assertTrue(
+            node_versions[0] != node_versions[1],
+            msg='getNodeLatestVersions returned two node versions that are equal but should be different'
+        )
+
+
 
     def test_edge_create(self):
         # There are two alternatives:
@@ -410,7 +451,6 @@ class TestClient(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             self.client.getEdge(uuid.uuid4().hex)
 
-    @unittest.skip
     def test_edge_version_create(self):
         edge = self.test_edge_create()
         from_node_id = edge.get_from_node_id()
@@ -503,7 +543,6 @@ class TestClient(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             self.client.getLineageEdge(uuid.uuid4().hex)
 
-    @unittest.skip
     def test_lineage_edge_version_create(self):
         lineage_edge = self.test_lineage_edge_create()
         nv1 = self.test_node_version_create()
