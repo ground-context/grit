@@ -174,6 +174,175 @@ class TestClient(unittest.TestCase):
 
         return node, nv1, nv2, nv3
 
+    def test_node_version_get_fan_out_in(self):
+        node = self.test_node_create()
+
+        nv1 = self.client.createNodeVersion(node.get_id())
+        nv2 = self.client.createNodeVersion(node.get_id())
+        nv3 = self.client.createNodeVersion(node.get_id())
+
+        nv4 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id(), nv2.get_id(), nv3.get_id()])
+
+        node_version = self.client.getNodeVersion(nv2.get_id())
+
+        self.assertTrue(
+            node_version is not None,
+            msg='getNodeVersion with node_id={} returned None instead of a node version'
+            .format(node.get_id())
+        )
+        self.assertTrue(
+            type(node_version) == model.core.node_version.NodeVersion,
+            msg="getNodeVersion returned nodeVersion of type '{}' rather than 'NodeVersion'"
+            .format(type(node_version))
+        )
+        self.assertTrue(
+            node_version.get_node_id() == node.get_id(),
+            msg="getNodeVersion's node_id does not match id of node"
+        )
+        self.assertTrue(
+            node_version == nv2,
+            msg="Stored and retrieved node versions mismatch"
+        )
+
+        node_version = self.client.getNodeVersion(nv4.get_id())
+
+        self.assertTrue(
+            node_version is not None,
+            msg='getNodeVersion with node_id={} returned None instead of a node version'
+            .format(node.get_id())
+        )
+        self.assertTrue(
+            type(node_version) == model.core.node_version.NodeVersion,
+            msg="getNodeVersion returned nodeVersion of type '{}' rather than 'NodeVersion'"
+            .format(type(node_version))
+        )
+        self.assertTrue(
+            node_version.get_node_id() == node.get_id(),
+            msg="getNodeVersion's node_id does not match id of node"
+        )
+        self.assertTrue(
+            node_version == nv4,
+            msg="Stored and retrieved node versions mismatch"
+        )
+
+
+    def test_node_version_get_dag(self):
+        node = self.test_node_create()
+
+        nv1 = self.client.createNodeVersion(node.get_id())
+        nv2 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id()])
+        nv3 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id()])
+
+        nv4 = self.client.createNodeVersion(node.get_id(), parentIds=[nv2.get_id(), nv3.get_id()])
+        nv5 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
+        nv6 = self.client.createNodeVersion(node.get_id(), parentIds=[nv2.get_id(), nv3.get_id(), nv4.get_id()])
+
+        node_version = self.client.getNodeVersion(nv2.get_id())
+
+        self.assertTrue(
+            node_version is not None,
+            msg='getNodeVersion with node_id={} returned None instead of a node version'
+            .format(node.get_id())
+        )
+        self.assertTrue(
+            type(node_version) == model.core.node_version.NodeVersion,
+            msg="getNodeVersion returned nodeVersion of type '{}' rather than 'NodeVersion'"
+            .format(type(node_version))
+        )
+        self.assertTrue(
+            node_version.get_node_id() == node.get_id(),
+            msg="getNodeVersion's node_id does not match id of node"
+        )
+        self.assertTrue(
+            node_version == nv2,
+            msg="Stored and retrieved node versions mismatch"
+        )
+
+        node_version = self.client.getNodeVersion(nv1.get_id())
+
+        self.assertTrue(
+            node_version is not None,
+            msg='getNodeVersion with node_id={} returned None instead of a node version'
+            .format(node.get_id())
+        )
+        self.assertTrue(
+            type(node_version) == model.core.node_version.NodeVersion,
+            msg="getNodeVersion returned nodeVersion of type '{}' rather than 'NodeVersion'"
+            .format(type(node_version))
+        )
+        self.assertTrue(
+            node_version.get_node_id() == node.get_id(),
+            msg="getNodeVersion's node_id does not match id of node"
+        )
+        self.assertTrue(
+            node_version == nv1,
+            msg="Stored and retrieved node versions mismatch"
+        )
+
+        node_version = self.client.getNodeVersion(nv4.get_id())
+
+        self.assertTrue(
+            node_version is not None,
+            msg='getNodeVersion with node_id={} returned None instead of a node version'
+            .format(node.get_id())
+        )
+        self.assertTrue(
+            type(node_version) == model.core.node_version.NodeVersion,
+            msg="getNodeVersion returned nodeVersion of type '{}' rather than 'NodeVersion'"
+            .format(type(node_version))
+        )
+        self.assertTrue(
+            node_version.get_node_id() == node.get_id(),
+            msg="getNodeVersion's node_id does not match id of node"
+        )
+        self.assertTrue(
+            node_version == nv4,
+            msg="Stored and retrieved node versions mismatch"
+        )
+
+        node_version = self.client.getNodeVersion(nv5.get_id())
+
+        self.assertTrue(
+            node_version is not None,
+            msg='getNodeVersion with node_id={} returned None instead of a node version'
+            .format(node.get_id())
+        )
+        self.assertTrue(
+            type(node_version) == model.core.node_version.NodeVersion,
+            msg="getNodeVersion returned nodeVersion of type '{}' rather than 'NodeVersion'"
+            .format(type(node_version))
+        )
+        self.assertTrue(
+            node_version.get_node_id() == node.get_id(),
+            msg="getNodeVersion's node_id does not match id of node"
+        )
+        self.assertTrue(
+            node_version == nv5,
+            msg="Stored and retrieved node versions mismatch"
+        )
+
+        node_version = self.client.getNodeVersion(nv6.get_id())
+
+        self.assertTrue(
+            node_version is not None,
+            msg='getNodeVersion with node_id={} returned None instead of a node version'
+            .format(node.get_id())
+        )
+        self.assertTrue(
+            type(node_version) == model.core.node_version.NodeVersion,
+            msg="getNodeVersion returned nodeVersion of type '{}' rather than 'NodeVersion'"
+            .format(type(node_version))
+        )
+        self.assertTrue(
+            node_version.get_node_id() == node.get_id(),
+            msg="getNodeVersion's node_id does not match id of node"
+        )
+        self.assertTrue(
+            node_version == nv6,
+            msg="Stored and retrieved node versions mismatch"
+        )
+
+
     def test_node_version_latest_get(self):
         pass
 

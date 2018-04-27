@@ -495,6 +495,7 @@ class GitImplementation(GroundAPI):
 
                 gizzard.runThere(['git', 'merge', '-s', 'ours', '-m', 'id: -1, class: Merge'] + branches[0:-1],
                                  sourceKey, self.cls2loc[className])
+                gizzard.runThere(['git', 'branch', '-D'] + branches[0:-1], sourceKey, self.cls2loc[className])
 
 
         with open(os.path.join(route, filename), 'w') as f:
