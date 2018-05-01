@@ -777,24 +777,11 @@ class GitImplementation(GroundAPI):
         return latest_versions
 
     def getNodeHistory(self, sourceKey):
-        nodeVersionMap = self._read_all_version(sourceKey, NodeVersion.__name__, Node.__name__)
-        nodeVersions = set(list(nodeVersionMap.keys()))
-        parentChild = {}
-        for evId in nodeVersions:
-            ev = nodeVersionMap[evId]
-            if ('parentIds' in ev) and (ev['parentIds']):
-                assert type(ev['parentIds']) == list
-                for parentId in ev['parentIds']:
-                    if not parentChild:
-                        nodeId = ev['nodeId']
-                        parentChild[str(nodeId)] = parentId
-                    parentChild[str(parentId)] = ev['id']
-        return parentChild
+        return gizzard.gitdag(sourceKey, 'node')
 
     def getNodeVersion(self, nodeVersionId):
         sourceKey = self._read_map_version_index(nodeVersionId)
-        commits = [i for i in gizzard.get_ver_commits(sourceKey, 'node')]
-        for commit, id in commits:
+        for commit, id in gizzard.get_ver_commits(sourceKey, 'node'):
             if id == int(nodeVersionId):
                 with gizzard.chinto(os.path.join(globals.GRIT_D, 'node', sourceKey)):
                     with gizzard.chkinto(commit):

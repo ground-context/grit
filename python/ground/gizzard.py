@@ -51,12 +51,61 @@ def gitlog(sourceKey, typ):
                 d = {}
     return ld
 
+def gitdag(sourceKey, typ):
+    typ = typ.lower()
+    ld = []
+    with chinto(os.path.join(globals.GRIT_D, typ, sourceKey)):
+        rawgitlog = __readProc__(['git', 'rev-list', '--children', '--all', '--pretty=format:%s'])
+        d = {}
+        for line in rawgitlog:
+            fields = line.split()
+            if 'commit' in line[0:6]:
+                d['commit'] = fields[1]
+                d['children'] = fields[2:]
+            elif 'id:' in line and 'class:' in line:
+                id = int(fields[1].split(',')[0])
+                d['id'] = int(fields[1].split(',')[0])
+                d['class'] = fields[3]
+                ld.append(d)
+                d = {}
+
+    # Remove the class: Node dummy that is first commit
+    ld = ld[0:-1]
+
+    # Partition list into Merge commit and NodeVersion commit:
+    nvs = []
+    ms = []
+    for d in ld:
+        if d['class'] == 'Merge':
+            ms.append(d)
+        elif d['class'] == 'NodeVersion':
+            nvs.append(d)
+        else:
+            raise ValueError("Unexepected class: {}".format(d['class']))
+
+    # Build a map
+    # Commit -> (Desired Commit, Corresponding Id)
+    d2 = {}
+    for nv in nvs:
+        d2[nv['commit']] = (nv['commit'], nv['id'])
+    for m in ms:
+        assert len(m['children']) == 1
+        d2[m['commit']] = d2[m['children'][0]]
+
+    # Prepare final output
+    fd = {}
+    for nv in nvs:
+        fd[d2[nv['commit']]] = list(map(lambda x: d2[x], nv['children']))
+
+    return fd
+
+
 def get_ver_commits(sourceKey, typ):
 
     ld = gitlog(sourceKey, typ)
-    return list(map(lambda x: (x['commit'], x['id']),
+    return map(lambda x: (x['commit'], x['id']),
                     filter(lambda x: 'Version' in x['class'],
-                           ld)))
+                           ld))
 
 def get_commits(sourceKey, typ):
     ld = gitlog(sourceKey, typ)
