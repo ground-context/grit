@@ -792,6 +792,7 @@ class GitImplementation(GroundAPI):
 
     def getNodeVersionAdjacentLineage(self, nodeVersionId):
         # All incoming and outgoing edges
+        # Delaying implementation
         lineageEdgeVersionMap = self._read_all_version_ever(LineageEdgeVersion.__name__)
         lineageEdgeVersions = set(list(lineageEdgeVersionMap.keys()))
         adjacent = []

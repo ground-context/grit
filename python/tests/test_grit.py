@@ -238,9 +238,7 @@ class TestClient(unittest.TestCase):
         nv6 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
 
         node_version = self.client.getNodeVersion(nv2.get_id())
-
-        print(node.get_source_key())
-
+        
         self.assertTrue(
             node_version is not None,
             msg='getNodeVersion with node_id={} returned None instead of a node version'
@@ -387,7 +385,107 @@ class TestClient(unittest.TestCase):
             msg='getNodeLatestVersions returned two node versions that are equal but should be different'
         )
 
+    def test_node_get_history(self):
+        # dag
+        node = self.test_node_create()
 
+        nv1 = self.client.createNodeVersion(node.get_id())
+        nv2 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id()])
+        nv3 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id()])
+
+        nv4 = self.client.createNodeVersion(node.get_id(), parentIds=[nv2.get_id(), nv3.get_id()])
+        nv5 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
+        nv6 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
+
+        dag = self.client.getNodeHistory(node.get_source_key())
+
+        self.assertTrue(
+            dag[nv1.get_id()] == {nv2.get_id(), nv3.get_id()},
+            msg = "Invalid children"
+        )
+        self.assertTrue(
+            dag[nv2.get_id()] == {nv4.get_id(),},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv3.get_id()] == {nv4.get_id(),},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv4.get_id()] == {nv5.get_id(), nv6.get_id()},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv5.get_id()] == set([]),
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv6.get_id()] == set([]),
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            len(dag) == 6,
+            msg="Expected 6 elements but found {}".format(len(dag))
+        )
+
+        # fan out in
+        node = self.test_node_create()
+
+        nv1 = self.client.createNodeVersion(node.get_id())
+        nv2 = self.client.createNodeVersion(node.get_id())
+        nv3 = self.client.createNodeVersion(node.get_id())
+
+        nv4 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id(), nv2.get_id(), nv3.get_id()])
+
+        dag = self.client.getNodeHistory(node.get_source_key())
+
+        self.assertTrue(
+            dag[nv1.get_id()] == {nv4.get_id(),},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv2.get_id()] == {nv4.get_id(), },
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv3.get_id()] == {nv4.get_id(), },
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv4.get_id()] == set([]),
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            len(dag) == 4,
+            msg="Expected 4 elements but found {}".format(len(dag))
+        )
+
+
+        # chain
+        node = self.test_node_create()
+
+        nv1 = self.client.createNodeVersion(node.get_id())
+        nv2 = self.client.createNodeVersion(node.get_id(), parentIds=[nv1.get_id()])
+        nv3 = self.client.createNodeVersion(node.get_id(), parentIds=[nv2.get_id()])
+
+        dag = self.client.getNodeHistory(node.get_source_key())
+
+        self.assertTrue(
+            dag[nv1.get_id()] == {nv2.get_id(),},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv2.get_id()] == {nv3.get_id(),},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv3.get_id()] == set([]),
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            len(dag) == 3,
+            msg="Expected 3 elements but found {}".format(len(dag))
+        )
 
     def test_edge_create(self):
         # There are two alternatives:

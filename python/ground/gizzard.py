@@ -63,8 +63,7 @@ def gitdag(sourceKey, typ):
                 d['commit'] = fields[1]
                 d['children'] = fields[2:]
             elif 'id:' in line and 'class:' in line:
-                id = int(fields[1].split(',')[0])
-                d['id'] = int(fields[1].split(',')[0])
+                d['id'] = str(fields[1].split(',')[0])
                 d['class'] = fields[3]
                 ld.append(d)
                 d = {}
