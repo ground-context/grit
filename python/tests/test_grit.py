@@ -239,6 +239,8 @@ class TestClient(unittest.TestCase):
 
         node_version = self.client.getNodeVersion(nv2.get_id())
 
+        print(node.get_source_key())
+
         self.assertTrue(
             node_version is not None,
             msg='getNodeVersion with node_id={} returned None instead of a node version'

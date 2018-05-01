@@ -6,6 +6,7 @@ import os
 import git
 import subprocess
 import time
+
 from shutil import copyfile
 # noinspection PyUnresolvedReferences
 from ground.common.model.core.node import Node
@@ -627,7 +628,7 @@ class GitImplementation(GroundAPI):
         return '.'.join(filename)
 
 
-        ### EDGES ###
+    ### EDGES ###
     def createEdge(self, sourceKey, fromNodeId, toNodeId, name="null", tags=None):
         if not self._find_file(sourceKey, Edge.__name__):
             fromNodeId = str(fromNodeId)
@@ -802,9 +803,8 @@ class GitImplementation(GroundAPI):
                 return nv
         raise RuntimeError("Reached invalid line in getNodeVersion")
 
-
-
     def getNodeVersionAdjacentLineage(self, nodeVersionId):
+        # All incoming and outgoing edges
         lineageEdgeVersionMap = self._read_all_version_ever(LineageEdgeVersion.__name__)
         lineageEdgeVersions = set(list(lineageEdgeVersionMap.keys()))
         adjacent = []
