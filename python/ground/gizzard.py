@@ -84,10 +84,10 @@ def gitdag(sourceKey, typ):
             raise ValueError("Unexepected class: {}".format(d['class']))
 
     # Build a map
-    # Commit -> (Desired Commit, Corresponding Id)
+    # Commit -> (Desired Id)
     d2 = {}
     for nv in nvs:
-        d2[nv['commit']] = (nv['commit'], nv['id'])
+        d2[nv['commit']] = nv['id']
     for m in ms:
         assert len(m['children']) == 1
         d2[m['commit']] = d2[m['children'][0]]
@@ -95,7 +95,7 @@ def gitdag(sourceKey, typ):
     # Prepare final output
     fd = {}
     for nv in nvs:
-        fd[d2[nv['commit']]] = list(map(lambda x: d2[x], nv['children']))
+        fd[d2[nv['commit']]] = set(map(lambda x: d2[x], nv['children']))
 
     return fd
 
