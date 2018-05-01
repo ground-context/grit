@@ -1,6 +1,8 @@
 import unittest
 import uuid
 
+import time
+
 import ground.grit as grit
 import ground.common.model as model
 
@@ -68,7 +70,7 @@ class TestClient(unittest.TestCase):
         #   or nv for node that not exists
 
         # Create a node_version for a node that exists
-        node_version = self.client.createNodeVersion(int(node.get_id()))
+        node_version = self.client.createNodeVersion(node.get_id())
         self.assertTrue(
             node_version is not None,
             msg='createNodeVersion with node_id={} returned None instead of a node version'
@@ -86,12 +88,12 @@ class TestClient(unittest.TestCase):
 
         # Create a node_version for a node that not exists
         with self.assertRaises(KeyError):
-            self.client.createNodeVersion(int(uuid.uuid4().int))
+            self.client.createNodeVersion(uuid.uuid4())
 
         # Now as above, but passing in a string rather than an int
 
         # Create a node_version for a node that exists
-        node_version = self.client.createNodeVersion(str(node.get_id()))
+        node_version = self.client.createNodeVersion(node.get_id())
         self.assertTrue(
             node_version is not None,
             msg='createNodeVersion with node_id={} returned None instead of a node version'
@@ -109,7 +111,7 @@ class TestClient(unittest.TestCase):
 
         # Create a node_version for a node that not exists
         with self.assertRaises(KeyError):
-            self.client.createNodeVersion(str(uuid.uuid4().int))
+            self.client.createNodeVersion(uuid.uuid4())
 
         # Total: created two distinct node versions for the same node.
         return node_version
@@ -239,7 +241,7 @@ class TestClient(unittest.TestCase):
 
         node_version = self.client.getNodeVersion(nv2.get_id())
 
-        print(node.get_source_key())
+        print("DAG: {}".format(node.get_source_key()))
 
         self.assertTrue(
             node_version is not None,
@@ -356,6 +358,7 @@ class TestClient(unittest.TestCase):
         nv5 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
         nv6 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
 
+        print('{}'.format(node.get_source_key()))
         node_versions = self.client.getNodeLatestVersions(node.get_source_key())
 
         for node_version in node_versions:
@@ -419,7 +422,7 @@ class TestClient(unittest.TestCase):
 
         # Create an edge between at least one non-existent node
         with self.assertRaises(KeyError):
-            self.client.createEdge(uuid.uuid4().hex, node1.get_id(), uuid.uuid4().int)
+            self.client.createEdge(uuid.uuid4().hex, node1.get_id(), uuid.uuid4())
 
         # Create an edge with the same source key
         with self.assertRaises(FileExistsError):
@@ -483,7 +486,7 @@ class TestClient(unittest.TestCase):
 
         #create an edge_version for an edge that does not exist
         with self.assertRaises(KeyError):
-            self.client.createNodeVersion(uuid.uuid4().int, to_node_version.get_id(),
+            self.client.createNodeVersion(uuid.uuid4(), to_node_version.get_id(),
                                           from_node_version.get_id())
 
         return edge_version
@@ -572,7 +575,7 @@ class TestClient(unittest.TestCase):
 
         # create an edge_version for an edge that does not exist
         with self.assertRaises(KeyError):
-            self.client.createNodeVersion(uuid.uuid4().int, nv2.get_id(),
+            self.client.createNodeVersion(uuid.uuid4(), nv2.get_id(),
                                           nv1.get_id())
 
         return edge_version

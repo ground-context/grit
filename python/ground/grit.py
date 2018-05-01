@@ -345,9 +345,6 @@ class GitImplementation(GroundAPI):
             os.mkdir(self.path)
             for item in self._items:
                 os.mkdir(self.path + item)
-        if not os.path.exists(self.path + 'next_id.txt'):
-            with open(self.path + 'next_id.txt', 'w') as f:
-                f.write('0')
         if not os.path.exists(self.path + 'index/' + 'index.json'):
             with open(self.path + 'index/' + 'index.json', 'w') as f:
                 json.dump({}, f)
@@ -412,22 +409,16 @@ class GitImplementation(GroundAPI):
         return body
 
     def _gen_id(self):
-        with open(self.path + 'next_id.txt', 'r') as f:
-            newid = int(f.read())
-        nxtid = str(newid + 1)
-        with open(self.path + 'next_id.txt', 'w') as f:
-            f.write(nxtid)
-        return str(newid)
+        return "null"
 
     def _write_files(self, sourceKey, body, className):
         sourceKey = str(sourceKey)
         filename = sourceKey + '.json'
         route = os.path.join(self.path + self.cls2loc[className], sourceKey)
 
-        if os.path.isdir(route):
-            repo = git.Repo(route)
-        else:
-            repo = git.Repo.init(route)
+        if not os.path.isdir(route):
+            os.mkdir(self.path + self.cls2loc[className] + sourceKey)
+            gizzard.runThere(['git', 'init'], sourceKey, self.cls2loc[className])
 
         if 'Version' in className:
             vbody = body['ItemVersion']
@@ -438,7 +429,7 @@ class GitImplementation(GroundAPI):
 
             if parents is None or len(parents) == 0:
                 # Get root/first commit
-                commit, id = gizzard.get_commits(sourceKey, self.cls2loc[className])[-1]
+                commit = gizzard.get_commits(sourceKey, self.cls2loc[className])[-1]
                 detached_head = True
 
                 for branch, commit_of_branch in gizzard.get_branch_commits(sourceKey, self.cls2loc[className]):
@@ -454,7 +445,7 @@ class GitImplementation(GroundAPI):
 
                 # assert: Now at branch with head attached to first commit
             elif len(parents) == 1:
-                commit = gizzard.id_to_commit(parents[0], sourceKey, self.cls2loc[className])
+                commit = parents[0]
                 detached_head = True
 
                 for branch, commit_of_branch in gizzard.get_branch_commits(sourceKey, self.cls2loc[className]):
@@ -470,7 +461,7 @@ class GitImplementation(GroundAPI):
 
                 # assert: Now at branch with head attached to some commit
             else:
-                commits = [gizzard.id_to_commit(p, sourceKey, self.cls2loc[className]) for p in parents]
+                commits = parents
                 branches = []
 
                 for commit in commits:
@@ -489,19 +480,20 @@ class GitImplementation(GroundAPI):
                         gizzard.runThere(['git', 'checkout', '-b', new_name], sourceKey, self.cls2loc[className])
                         branches.append(new_name)
 
-                gizzard.runThere(['git', 'merge', '-s', 'ours', '-m', 'id: -1, class: Merge'] + branches[0:-1],
+                gizzard.runThere(['git', 'merge', '-s', 'ours', '-m', 'class: Merge'] + branches[0:-1],
                                  sourceKey, self.cls2loc[className])
                 gizzard.runThere(['git', 'branch', '-D'] + branches[0:-1], sourceKey, self.cls2loc[className])
 
         with open(os.path.join(route, filename), 'w') as f:
             json.dump(body, f)
 
-        repo.index.add([os.path.join(route, filename)])
+        gizzard.runThere(['git', 'add', filename], sourceKey, self.cls2loc[className])
 
-        if 'Version' in className:
-            repo.index.commit("id: {}, class: {}".format(body["ItemVersion"]["id"], className))
-        else:
-            repo.index.commit("id: {}, class: {}".format(body["Item"]["id"], className))
+        gizzard.runThere(['git', 'commit', '-m', "class: {}".format(className)], sourceKey, self.cls2loc[className])
+
+        out = gizzard.readThere(['git', 'rev-parse', 'HEAD'], sourceKey, self.cls2loc[className])[0]
+
+        return out
 
 
     def _read_files(self, sourceKey, className, layer):
@@ -642,13 +634,13 @@ class GitImplementation(GroundAPI):
             body["fromNodeId"] = fromNodeId
             body["toNodeId"] = toNodeId
             edge = Edge(body)
-            edgeId = str(edge.get_id())
             write = self._deconstruct_item(edge)
             write["fromNodeId"] = edge.get_from_node_id()
             write["toNodeId"] = edge.get_to_node_id()
             write = {"Item": write, "ItemVersion": {}}
-            self._write_files(sourceKey, write, Edge.__name__)
-            self._map_index(edgeId, sourceKey)
+            sha = self._write_files(sourceKey, write, Edge.__name__)
+            self._map_index(sha, sourceKey)
+            edge._id = sha
         else:
             raise FileExistsError(
                 "Edge with source key '{}' already exists.".format(sourceKey))
@@ -669,21 +661,23 @@ class GitImplementation(GroundAPI):
         body["toNodeVersionStartId"] = str(toNodeVersionStartId)
         body["fromNodeVersionStartId"] = str(fromNodeVersionStartId)
 
-        if toNodeVersionEndId and int(toNodeVersionEndId) > 0:
+        if toNodeVersionEndId:
             body["toNodeVersionEndId"] = str(toNodeVersionEndId)
 
-        if fromNodeVersionEndId and int(fromNodeVersionEndId) > 0:
+        if fromNodeVersionEndId:
             body["fromNodeVersionEndId"] = str(fromNodeVersionEndId)
 
         sourceKey = self._read_map_index(edgeId)
         edge = self.getEdge(sourceKey)
 
         edgeVersion = EdgeVersion(body)
-        edgeVersionId = str(edgeVersion.get_id())
 
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": edge.to_dict(), "ItemVersion": write}
-        self._write_files(sourceKey, write, EdgeVersion.__name__)
+        sha = self._write_files(sourceKey, write, EdgeVersion.__name__)
+        self._map_version_index(sha, sourceKey)
+
+        edgeVersion._id = sha
 
         return edgeVersion
 
@@ -691,7 +685,10 @@ class GitImplementation(GroundAPI):
         if not self._find_file(sourceKey, Edge.__name__):
             raise FileNotFoundError(
                 "Node with source key '{}' does not exist.".format(sourceKey))
-        return Edge(self._read_files(sourceKey, Edge.__name__, "Item"))
+        sha = gizzard.get_first_commit(sourceKey, 'edge')
+        edge = Edge(self._read_files(sourceKey, Edge.__name__, "Item"))
+        edge._id = sha
+        return edge
 
 
     def getEdgeLatestVersions(self, sourceKey):
@@ -729,11 +726,11 @@ class GitImplementation(GroundAPI):
         if not self._find_file(sourceKey, Node.__name__):
             body = self._create_item(Node.__name__, sourceKey, name, tags)
             node = Node(body)
-            nodeId = str(node.get_item_id())
             write = self._deconstruct_item(node)
             write = {"Item" : write, "ItemVersion": {}}
-            self._write_files(sourceKey, write, Node.__name__)
-            self._map_index(nodeId, sourceKey)
+            sha = self._write_files(sourceKey, write, Node.__name__)
+            self._map_index(sha, sourceKey)
+            node._id = sha
         else:
             raise FileExistsError(
                 "Node with source key '{}' already exists.".format(sourceKey))
@@ -751,13 +748,13 @@ class GitImplementation(GroundAPI):
         node = self.getNode(sourceKey)
 
         nodeVersion = NodeVersion(body)
-        nodeVersionId = str(nodeVersion.get_id())
 
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": node.to_dict(), "ItemVersion": write}
-        self._write_files(sourceKey, write, NodeVersion.__name__)
-        self._map_version_index(nodeVersionId, sourceKey)
+        sha = self._write_files(sourceKey, write, NodeVersion.__name__)
+        self._map_version_index(sha, sourceKey)
 
+        nodeVersion._id = sha
         return nodeVersion
 
 
@@ -765,7 +762,10 @@ class GitImplementation(GroundAPI):
         if not self._find_file(sourceKey, Node.__name__):
             raise FileNotFoundError(
                 "Node with source key '{}' does not exist.".format(sourceKey))
-        return Node(self._read_files(sourceKey, Node.__name__, "Item"))
+        sha = gizzard.get_first_commit(sourceKey, 'node')
+        node = Node(self._read_files(sourceKey, Node.__name__, "Item"))
+        node._id = sha
+        return node
 
     def getNodeLatestVersions(self, sourceKey):
         latest_versions = []
@@ -773,6 +773,7 @@ class GitImplementation(GroundAPI):
             gizzard.runThere(['git', 'checkout', branch], sourceKey, 'node')
             readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
             nv = NodeVersion(readfiles)
+            nv._id = commit
             latest_versions.append(nv)
         return latest_versions
 
@@ -792,16 +793,15 @@ class GitImplementation(GroundAPI):
         return parentChild
 
     def getNodeVersion(self, nodeVersionId):
+        nodeVersionId = str(nodeVersionId)
         sourceKey = self._read_map_version_index(nodeVersionId)
-        commits = [i for i in gizzard.get_ver_commits(sourceKey, 'node')]
-        for commit, id in commits:
-            if id == int(nodeVersionId):
-                with gizzard.chinto(os.path.join(globals.GRIT_D, 'node', sourceKey)):
-                    with gizzard.chkinto(commit):
-                        readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
-                    nv = NodeVersion(readfiles)
-                return nv
-        raise RuntimeError("Reached invalid line in getNodeVersion")
+        with gizzard.chinto(os.path.join(globals.GRIT_D, 'node', sourceKey)):
+            with gizzard.chkinto(nodeVersionId):
+                readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
+            nv = NodeVersion(readfiles)
+            nv._id = nodeVersionId
+        return nv
+
 
     def getNodeVersionAdjacentLineage(self, nodeVersionId):
         # All incoming and outgoing edges
@@ -964,11 +964,11 @@ class GitImplementation(GroundAPI):
         if not self._find_file(sourceKey, LineageEdge.__name__):
             body = self._create_item(LineageEdge.__name__, sourceKey, name, tags)
             lineageEdge = LineageEdge(body)
-            lineageEdgeId = str(lineageEdge.get_id())
             write = self._deconstruct_item(lineageEdge)
             write =  {"Item" : write, "ItemVersion": {}}
-            self._write_files(sourceKey, write, LineageEdge.__name__)
-            self._map_index(lineageEdgeId, sourceKey)
+            sha = self._write_files(sourceKey, write, LineageEdge.__name__)
+            self._map_index(sha, sourceKey)
+            lineageEdge._id = sha
         else:
             raise FileExistsError(
                 "Lineage Edge with source key '{}' already exists.".format(sourceKey))
@@ -989,11 +989,13 @@ class GitImplementation(GroundAPI):
         lineage_edge = self.getLineageEdge(sourceKey)
 
         lineageEdgeVersion = LineageEdgeVersion(body)
-        lineageEdgeVersionId = str(lineageEdgeVersion.get_id())
 
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": lineage_edge.to_dict(), "ItemVersion": write}
-        self._write_files(sourceKey, write, LineageEdgeVersion.__name__)
+        sha = self._write_files(sourceKey, write, LineageEdgeVersion.__name__)
+        self._map_version_index(sha, sourceKey)
+
+        lineageEdgeVersion._id = sha
 
         return lineageEdgeVersion
 
@@ -1001,8 +1003,10 @@ class GitImplementation(GroundAPI):
         if not self._find_file(sourceKey, LineageEdge.__name__):
             raise FileNotFoundError(
                 "Lineage Edge with source key '{}' does not exist".format(sourceKey))
-
-        return LineageEdge(self._read_files(sourceKey, LineageEdge.__name__, "Item"))
+        sha = gizzard.get_first_commit(sourceKey, 'lineage_edge')
+        le = LineageEdge(self._read_files(sourceKey, LineageEdge.__name__, "Item"))
+        le._id = sha
+        return le
 
     def getLineageEdgeLatestVersions(self, sourceKey):
         lineageEdgeVersionMap = self._read_all_version(sourceKey, LineageEdgeVersion.__name__, LineageEdge.__name__)

@@ -3,10 +3,16 @@
 import subprocess
 import os
 import uuid
+import time
 
 from typing import List
 
 from . import globals
+
+CHECKOUT_EPSILON = 0.50
+MERGE_EPSILON = 1
+COMMIT_EPSILON = 0.05
+
 
 class chinto(object):
     def __init__(self, target):
@@ -25,16 +31,12 @@ class chkinto(object):
         self.currentBranch = __get_current_branch__()
 
     def __enter__(self):
-        p1 = subprocess.Popen(['git', 'checkout', self.target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        p1.wait()
-        p1.terminate()
-        p1.wait()
+        subprocess.run(['git', 'checkout', self.target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(CHECKOUT_EPSILON)
 
     def __exit__(self, type, value, traceback):
-        p1 = subprocess.Popen(['git', 'checkout', self.currentBranch], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        p1.wait()
-        p1.terminate()
-        p1.wait()
+        subprocess.run(['git', 'checkout', self.currentBranch], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(CHECKOUT_EPSILON)
 
 def gitlog(sourceKey, typ):
     typ = typ.lower()
@@ -49,24 +51,26 @@ def gitlog(sourceKey, typ):
                 d['Author'] = ' '.join(line.split()[1:])
             elif 'Date' in line[0:4]:
                 d['Date'] = ' '.join(line.split()[1:])
-            elif 'id:' in line and 'class:' in line:
+            elif 'class:' in line:
                 line = line.split()
-                d['id'] = int(line[1].split(',')[0])
-                d['class'] = line[3]
+                d['class'] = line[1]
                 ld.append(d)
                 d = {}
     return ld
 
-def get_ver_commits(sourceKey, typ):
+def get_first_commit(sourceKey, typ):
+    with chinto(os.path.join(globals.GRIT_D, typ, sourceKey)):
+        return __readProc__(['git', 'rev-list', '--max-parents=0', 'HEAD'])[0]
 
+def get_ver_commits(sourceKey, typ):
     ld = gitlog(sourceKey, typ)
-    return list(map(lambda x: (x['commit'], x['id']),
+    return list(map(lambda x: x['commit'],
                     filter(lambda x: 'Version' in x['class'],
                            ld)))
 
 def get_commits(sourceKey, typ):
     ld = gitlog(sourceKey, typ)
-    return list(map(lambda x: (x['commit'], x['id']), ld))
+    return list(map(lambda x: x['commit'], ld))
 
 def get_branch_commits(sourceKey, typ):
     # Warning: returns iterator not list (not subscriptable)
@@ -80,11 +84,6 @@ def get_branch_commits(sourceKey, typ):
         commits = [i for i in __readProc__(['git', 'rev-parse', '--branches']) if i]
 
     return zip(branches, commits)
-
-def id_to_commit(id, sourcekey, typ):
-    for commit, id2 in get_ver_commits(sourcekey, typ):
-        if int(id2) == int(id):
-            return commit
 
 def __get_current_branch__():
     def split(s):
@@ -102,19 +101,24 @@ def new_branch_name(sourceKey, typ):
     return new_name
 
 def __runProc__(commands: List):
-    p1 = subprocess.Popen(commands, stdout=subprocess.DEVNULL,
+    start = time.time()
+    subprocess.run(commands, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL)
-    p1.wait()
-    p1.terminate()
-    p1.wait()
+    end = time.time()
+
+    if 'checkout' in commands:
+        time.sleep(CHECKOUT_EPSILON)
+        print(end-start)
+    elif 'commit' in commands:
+        time.sleep(COMMIT_EPSILON)
+        print(end-start)
+    elif 'merge' in commands:
+        time.sleep(MERGE_EPSILON)
+        print(end-start)
 
 def __readProc__(commands: List):
-    p1 = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    rawgitlog = str(p1.stdout.read(), 'UTF-8').split('\n')
-    p1.wait()
-    p1.stdout.close()
-    p1.terminate()
-    p1.wait()
+    p1 = subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    rawgitlog = str(p1.stdout, 'UTF-8').split('\n')
     return rawgitlog
 
 def runThere(commands: List, sourceKey, typ):
