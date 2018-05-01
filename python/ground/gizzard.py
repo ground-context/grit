@@ -25,16 +25,10 @@ class chkinto(object):
         self.currentBranch = __get_current_branch__()
 
     def __enter__(self):
-        p1 = subprocess.Popen(['git', 'checkout', self.target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        p1.wait()
-        p1.terminate()
-        p1.wait()
+        subprocess.run(['git', 'checkout', self.target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def __exit__(self, type, value, traceback):
-        p1 = subprocess.Popen(['git', 'checkout', self.currentBranch], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        p1.wait()
-        p1.terminate()
-        p1.wait()
+        subprocess.run(['git', 'checkout', self.currentBranch], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def gitlog(sourceKey, typ):
     typ = typ.lower()
@@ -102,19 +96,12 @@ def new_branch_name(sourceKey, typ):
     return new_name
 
 def __runProc__(commands: List):
-    p1 = subprocess.Popen(commands, stdout=subprocess.DEVNULL,
+    subprocess.run(commands, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL)
-    p1.wait()
-    p1.terminate()
-    p1.wait()
 
 def __readProc__(commands: List):
-    p1 = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    rawgitlog = str(p1.stdout.read(), 'UTF-8').split('\n')
-    p1.wait()
-    p1.stdout.close()
-    p1.terminate()
-    p1.wait()
+    p1 = subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    rawgitlog = str(p1.stdout, 'UTF-8').split('\n')
     return rawgitlog
 
 def runThere(commands: List, sourceKey, typ):
