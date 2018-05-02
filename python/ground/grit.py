@@ -684,45 +684,40 @@ class GitImplementation(GroundAPI):
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": edge.to_dict(), "ItemVersion": write}
         self._write_files(sourceKey, write, EdgeVersion.__name__)
+        self._map_version_index(edgeVersionId, sourceKey)
 
         return edgeVersion
 
     def getEdge(self, sourceKey):
         if not self._find_file(sourceKey, Edge.__name__):
             raise FileNotFoundError(
-                "Node with source key '{}' does not exist.".format(sourceKey))
+                "Edge with source key '{}' does not exist.".format(sourceKey))
         return Edge(self._read_files(sourceKey, Edge.__name__, "Item"))
 
 
     def getEdgeLatestVersions(self, sourceKey):
-        edgeVersionMap = self._read_all_version(sourceKey, EdgeVersion.__name__, Edge.__name__)
-        edgeVersions = set(list(edgeVersionMap.keys()))
-        is_parent = set([])
-        for evId in edgeVersions:
-            ev = edgeVersionMap[evId]
-            if ('parentIds' in ev) and (ev['parentIds']):
-                assert type(ev['parentIds']) == list
-                for parentId in ev['parentIds']:
-                    is_parent |= {parentId, }
-        return [edgeVersionMap[Id] for Id in list(edgeVersions - is_parent)]
+        latest_versions = []
+        for branch, commit in gizzard.get_branch_commits(sourceKey, 'edge'):
+            gizzard.runThere(['git', 'checkout', branch], sourceKey, 'edge')
+            readfiles = self._read_files(sourceKey, Edge.__name__, "ItemVersion")
+            ev = EdgeVersion(readfiles)
+            latest_versions.append(ev)
+
+        return latest_versions
 
     def getEdgeHistory(self, sourceKey):
-        edgeVersionMap = self._read_all_version(sourceKey, EdgeVersion.__name__, Edge.__name__)
-        edgeVersions = set(list(edgeVersionMap.keys()))
-        parentChild = {}
-        for evId in edgeVersions:
-            ev = edgeVersionMap[evId]
-            if ('parentIds' in ev) and (ev['parentIds']):
-                assert type(ev['parentIds']) == list
-                for parentId in ev['parentIds']:
-                    if not parentChild:
-                        edgeId = ev['edgeId']
-                        parentChild[str(edgeId)] = parentId
-                    parentChild[str(parentId)] = ev['id']
-        return parentChild
+        return gizzard.gitdag(sourceKey, 'edge')
 
     def getEdgeVersion(self, edgeVersionId):
-        return self._read_version(edgeVersionId, EdgeVersion.__name__)
+        sourceKey = self._read_map_version_index(edgeVersionId)
+        for commit, id in gizzard.get_ver_commits(sourceKey, 'edge'):
+            if id == int(edgeVersionId):
+                with gizzard.chinto(os.path.join(globals.GRIT_D, 'edge', sourceKey)):
+                    with gizzard.chkinto(commit):
+                        readfiles = self._read_files(sourceKey, Edge.__name__, "ItemVersion")
+                    ev = EdgeVersion(readfiles)
+                return ev
+        raise RuntimeError("Reached invalid line in getEdgeVersion")
 
     ### NODES ###
     def createNode(self, sourceKey, name="null", tags=None):
@@ -757,7 +752,6 @@ class GitImplementation(GroundAPI):
         write = {"Item": node.to_dict(), "ItemVersion": write}
         self._write_files(sourceKey, write, NodeVersion.__name__)
         self._map_version_index(nodeVersionId, sourceKey)
-
         return nodeVersion
 
 
@@ -982,6 +976,7 @@ class GitImplementation(GroundAPI):
         write = self._deconstruct_rich_version_json(body)
         write = {"Item": lineage_edge.to_dict(), "ItemVersion": write}
         self._write_files(sourceKey, write, LineageEdgeVersion.__name__)
+        self._map_version_index(lineageEdgeVersionId, sourceKey)
 
         return lineageEdgeVersion
 
@@ -993,34 +988,27 @@ class GitImplementation(GroundAPI):
         return LineageEdge(self._read_files(sourceKey, LineageEdge.__name__, "Item"))
 
     def getLineageEdgeLatestVersions(self, sourceKey):
-        lineageEdgeVersionMap = self._read_all_version(sourceKey, LineageEdgeVersion.__name__, LineageEdge.__name__)
-        lineageEdgeVersions = set(list(lineageEdgeVersionMap.keys()))
-        is_parent = set([])
-        for evId in lineageEdgeVersions:
-            ev = lineageEdgeVersionMap[evId]
-            if ('parentIds' in ev) and (ev['parentIds']):
-                assert type(ev['parentIds']) == list
-                for parentId in ev['parentIds']:
-                    is_parent |= {parentId, }
-        return [lineageEdgeVersionMap[Id] for Id in list(lineageEdgeVersions - is_parent)]
+        latest_versions = []
+        for branch, commit in gizzard.get_branch_commits(sourceKey, 'lineage_edge'):
+            gizzard.runThere(['git', 'checkout', branch], sourceKey, 'lineage_edge')
+            readfiles = self._read_files(sourceKey, LineageEdge.__name__, "ItemVersion")
+            lev = LineageEdgeVersion(readfiles)
+            latest_versions.append(lev)
+        return latest_versions
 
     def getLineageEdgeHistory(self, sourceKey):
-        lineageEdgeVersionMap = self._read_all_version(sourceKey, LineageEdgeVersion.__name__, LineageEdge.__name__)
-        lineageEdgeVersions = set(list(lineageEdgeVersionMap.keys()))
-        parentChild = {}
-        for evId in lineageEdgeVersions:
-            ev = lineageEdgeVersionMap[evId]
-            if ('parentIds' in ev) and (ev['parentIds']):
-                assert type(ev['parentIds']) == list
-                for parentId in ev['parentIds']:
-                    if not parentChild:
-                        lineageEdgeId = ev['lineageEdgeId']
-                        parentChild[str(lineageEdgeId)] = parentId
-                    parentChild[str(parentId)] = ev['id']
-        return parentChild
+        return gizzard.gitdag(sourceKey, 'lineage_edge')
 
     def getLineageEdgeVersion(self, lineageEdgeVersionId):
-        return self._read_version(lineageEdgeVersionId, LineageEdgeVersion.__name__)
+        sourceKey = self._read_map_version_index(lineageEdgeVersionId)
+        for commit, id in gizzard.get_ver_commits(sourceKey, 'lineage_edge'):
+            if id == int(lineageEdgeVersionId):
+                with gizzard.chinto(os.path.join(globals.GRIT_D, 'lineage_edge', sourceKey)):
+                    with gizzard.chkinto(commit):
+                        readfiles = self._read_files(sourceKey, LineageEdge.__name__, "ItemVersion")
+                    lev = LineageEdgeVersion(readfiles)
+                return lev
+        raise RuntimeError("Reached invalid line in getNodeVersion")
 
     ### LINEAGE GRAPHS ###
     def createLineageGraph(self, sourceKey, name="null", tags=None):
