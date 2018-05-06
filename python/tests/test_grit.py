@@ -750,6 +750,22 @@ class TestClient(unittest.TestCase):
             print('Time elapsed is: ' + str(elapsed) + " seconds")
 
     # @profile
+    def test_edge_get_history(self):
+        pass
+
+    # @profile
+    def test_lineage_edge_version_get(self):
+        pass
+
+    # @profile
+    def test_lineage_edge_version_latest_get(self):
+        pass
+
+    # @profile
+    def test_lineage_edge_get_history(self):
+        pass
+
+    # @profile
     def test_lineage_edge_create(self):
         source_key = uuid.uuid4().hex
         start = time.time()
