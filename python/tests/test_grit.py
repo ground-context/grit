@@ -836,7 +836,7 @@ class TestClient(unittest.TestCase):
 
 
     # @profile
-    def test_lineage_edge_version_latest_get(self):
+    def test_lineage_edge_get_history(self):
         # dag
         n1 = self.test_node_version_create()
         n2 = self.test_node_version_create()
@@ -893,8 +893,53 @@ class TestClient(unittest.TestCase):
 
 
     # @profile
-    def test_lineage_edge_get_history(self):
-        pass
+    def test_lineage_edge_version_latest_get(self):
+        n1 = self.test_node_version_create()
+        n2 = self.test_node_version_create()
+
+        sk1 = uuid.uuid4().hex
+        sk2 = uuid.uuid4().hex
+
+        edge = self.client.createLineageEdge(sk1)
+
+        nv1 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id())
+        nv2 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv1.get_id()])
+        nv3 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv1.get_id()])
+
+        nv4 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(),
+                                                   parentIds=[nv2.get_id(), nv3.get_id()])
+        nv5 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv4.get_id()])
+        nv6 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv4.get_id()])
+
+        start = time.time()
+        edge_versions = self.client.getLineageEdgeLatestVersions(edge.get_source_key())
+
+        for edge_version in edge_versions:
+            self.assertTrue(
+                edge_version is not None,
+                msg='ERR'
+            )
+            self.assertTrue(
+                type(edge_version) == model.usage.lineage_edge_version.LineageEdgeVersion,
+                msg='ERR'
+            )
+            self.assertTrue(
+                edge_version.get_lineage_edge_id() == edge.get_id(),
+                msg='ERR'
+            )
+            self.assertTrue(
+                edge_version == nv5 or edge_version == nv6,
+                msg='ERR'
+            )
+        self.assertTrue(
+            len(edge_versions) == 2,
+            msg='ERR'
+        )
+        self.assertTrue(
+            edge_versions[0] != edge_versions[1],
+            msg='ERR'
+        )
+
 
     # @profile
     def test_lineage_edge_create(self):
