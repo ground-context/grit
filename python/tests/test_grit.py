@@ -806,11 +806,91 @@ class TestClient(unittest.TestCase):
 
     # @profile
     def test_lineage_edge_version_get(self):
-        pass
+        le = self.test_lineage_edge_version_create()
+
+        start = time.time()
+
+        lineage_edge_version = self.client.getLineageEdgeVersion(le.get_id())
+
+        self.assertTrue(
+            lineage_edge_version is not None,
+            msg='getLineageEdgeVersion with lineage_edge_id={} returned None instead of a lineage edge version'
+            .format(lineage_edge_version.get_id())
+        )
+        self.assertTrue(
+            type(lineage_edge_version) == model.usage.lineage_edge_version.LineageEdgeVersion,
+            msg="getLineageEdgeVersion returned lineageEdgeVersion of type '{}' rather than 'LineageEdgeVersion'"
+            .format(type(lineage_edge_version))
+        )
+        self.assertTrue(
+            lineage_edge_version.get_lineage_edge_id() == le.get_lineage_edge_id(),
+            msg="ERR"
+        )
+        self.assertTrue(
+            lineage_edge_version == le,
+            msg="ERR"
+        )
+        elapsed = time.time() - start
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
+
 
     # @profile
     def test_lineage_edge_version_latest_get(self):
-        pass
+        # dag
+        n1 = self.test_node_version_create()
+        n2 = self.test_node_version_create()
+
+        sk1 = uuid.uuid4().hex
+        sk2 = uuid.uuid4().hex
+
+        edge = self.client.createLineageEdge(sk1)
+
+        nv1 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id())
+        nv2 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv1.get_id()])
+        nv3 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv1.get_id()])
+
+        nv4 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(),
+                                            parentIds=[nv2.get_id(), nv3.get_id()])
+        nv5 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv4.get_id()])
+        nv6 = self.client.createLineageEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv4.get_id()])
+
+        start = time.time()
+        dag = self.client.getLineageEdgeHistory(edge.get_source_key())
+
+        self.assertTrue(
+            dag[nv1.get_id()] == {nv2.get_id(), nv3.get_id()},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv2.get_id()] == {nv4.get_id(), },
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv3.get_id()] == {nv4.get_id(), },
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv4.get_id()] == {nv5.get_id(), nv6.get_id()},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv5.get_id()] == set([]),
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv6.get_id()] == set([]),
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            len(dag) == 6,
+            msg="Expected 6 elements but found {}".format(len(dag))
+        )
+
+        elapsed = time.time() - start
+        if VERBOSE:
+            print('Time elapsed in dag is: ' + str(elapsed) + " seconds")
+
 
     # @profile
     def test_lineage_edge_get_history(self):
