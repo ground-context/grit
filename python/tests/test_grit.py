@@ -751,7 +751,58 @@ class TestClient(unittest.TestCase):
 
     # @profile
     def test_edge_get_history(self):
-        pass
+        # dag
+        n1 = self.test_node_create()
+        n2 = self.test_node_create()
+
+        sk1 = uuid.uuid4().hex
+        sk2 = uuid.uuid4().hex
+
+        edge = self.client.createEdge(sk1, n1.get_id(), n2.get_id())
+
+        nv1 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id())
+        nv2 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv1.get_id()])
+        nv3 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv1.get_id()])
+
+        nv4 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv2.get_id(), nv3.get_id()])
+        nv5 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv4.get_id()])
+        nv6 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[nv4.get_id()])
+
+        start = time.time()
+        dag = self.client.getEdgeHistory(edge.get_source_key())
+
+        self.assertTrue(
+            dag[nv1.get_id()] == {nv2.get_id(), nv3.get_id()},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv2.get_id()] == {nv4.get_id(), },
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv3.get_id()] == {nv4.get_id(), },
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv4.get_id()] == {nv5.get_id(), nv6.get_id()},
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv5.get_id()] == set([]),
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv6.get_id()] == set([]),
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            len(dag) == 6,
+            msg="Expected 6 elements but found {}".format(len(dag))
+        )
+
+        elapsed = time.time() - start
+        if VERBOSE:
+            print('Time elapsed in dag is: ' + str(elapsed) + " seconds")
 
     # @profile
     def test_lineage_edge_version_get(self):
