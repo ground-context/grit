@@ -1,11 +1,15 @@
 import unittest
 import uuid
 import time
+import argparse
 
 import ground.grit as grit
 import ground.common.model as model
 
 from memory_profiler import profile
+
+VERBOSE = False
+
 
 class TestClient(unittest.TestCase):
 
@@ -13,7 +17,7 @@ class TestClient(unittest.TestCase):
     def setUpClass(cls):
         cls.client = grit.GroundClient('git')
 
-    @profile
+    # @profile
     def test_node_create(self):
         source_key = uuid.uuid4().hex
         start = time.time()
@@ -40,10 +44,11 @@ class TestClient(unittest.TestCase):
             self.client.createNode(source_key, source_key)
 
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
         return node
 
-    @profile
+    # @profile
     def test_node_get(self):
         node = self.test_node_create()
 
@@ -70,9 +75,10 @@ class TestClient(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             self.client.getNode(uuid.uuid4().hex)
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
-    @profile
+    # @profile
     def test_node_version_create(self):
         node = self.test_node_create()
 
@@ -126,10 +132,11 @@ class TestClient(unittest.TestCase):
 
         # Total: created two distinct node versions for the same node.
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
         return node_version
 
-    @profile
+    # @profile
     def test_node_version_get_chain(self):
         node = self.test_node_create()
 
@@ -160,11 +167,12 @@ class TestClient(unittest.TestCase):
             msg="Stored and retrieved node versions mismatch"
         )
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
         return node, nv1, nv2, nv3
 
-    @profile
+    # @profile
     def test_node_version_get_fan(self):
         node = self.test_node_create()
 
@@ -195,11 +203,12 @@ class TestClient(unittest.TestCase):
             msg="Stored and retrieved node versions mismatch"
         )
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
         return node, nv1, nv2, nv3
 
-    @profile    
+    # @profile
     def test_node_version_get_fan_out_in(self):
         node = self.test_node_create()
 
@@ -252,10 +261,10 @@ class TestClient(unittest.TestCase):
             msg="Stored and retrieved node versions mismatch"
         )
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
-
-    @profile
+    # @profile
     def test_node_version_get_dag(self):
         node = self.test_node_create()
 
@@ -374,10 +383,10 @@ class TestClient(unittest.TestCase):
             msg="Stored and retrieved node versions mismatch"
         )
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
-
-    @profile
+    # @profile
     def test_node_version_latest_get(self):
         node = self.test_node_create()
 
@@ -414,16 +423,17 @@ class TestClient(unittest.TestCase):
         self.assertTrue(
             len(node_versions) == 2,
             msg='getNodeLatestVersions returned {} node versions but there are 2 latest.'
-                .format(len(node_versions))
+            .format(len(node_versions))
         )
         self.assertTrue(
             node_versions[0] != node_versions[1],
             msg='getNodeLatestVersions returned two node versions that are equal but should be different'
         )
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
-    @profile
+    # @profile
     def test_node_get_history(self):
         # dag
         node = self.test_node_create()
@@ -441,14 +451,14 @@ class TestClient(unittest.TestCase):
 
         self.assertTrue(
             dag[nv1.get_id()] == {nv2.get_id(), nv3.get_id()},
-            msg = "Invalid children"
-        )
-        self.assertTrue(
-            dag[nv2.get_id()] == {nv4.get_id(),},
             msg="Invalid children"
         )
         self.assertTrue(
-            dag[nv3.get_id()] == {nv4.get_id(),},
+            dag[nv2.get_id()] == {nv4.get_id(), },
+            msg="Invalid children"
+        )
+        self.assertTrue(
+            dag[nv3.get_id()] == {nv4.get_id(), },
             msg="Invalid children"
         )
         self.assertTrue(
@@ -469,7 +479,8 @@ class TestClient(unittest.TestCase):
         )
 
         elapsed = time.time() - start
-        print('Time elapsed in dag is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed in dag is: ' + str(elapsed) + " seconds")
 
         # fan out in
         node = self.test_node_create()
@@ -485,7 +496,7 @@ class TestClient(unittest.TestCase):
         dag = self.client.getNodeHistory(node.get_source_key())
 
         self.assertTrue(
-            dag[nv1.get_id()] == {nv4.get_id(),},
+            dag[nv1.get_id()] == {nv4.get_id(), },
             msg="Invalid children"
         )
         self.assertTrue(
@@ -505,8 +516,8 @@ class TestClient(unittest.TestCase):
             msg="Expected 4 elements but found {}".format(len(dag))
         )
         elapsed = time.time() - start
-        print('Time elapsed in fan out in is: ' + elapsed + " seconds")
-
+        if VERBOSE:
+            print('Time elapsed in fan out in is: ' + str(elapsed) + " seconds")
 
         # chain
         node = self.test_node_create()
@@ -520,11 +531,11 @@ class TestClient(unittest.TestCase):
         dag = self.client.getNodeHistory(node.get_source_key())
 
         self.assertTrue(
-            dag[nv1.get_id()] == {nv2.get_id(),},
+            dag[nv1.get_id()] == {nv2.get_id(), },
             msg="Invalid children"
         )
         self.assertTrue(
-            dag[nv2.get_id()] == {nv3.get_id(),},
+            dag[nv2.get_id()] == {nv3.get_id(), },
             msg="Invalid children"
         )
         self.assertTrue(
@@ -536,9 +547,10 @@ class TestClient(unittest.TestCase):
             msg="Expected 3 elements but found {}".format(len(dag))
         )
         elapsed = time.time() - start
-        print('Time elapsed in chain is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed in chain is: ' + str(elapsed) + " seconds")
 
-    @profile
+    # @profile
     def test_edge_create(self):
         # There are two alternatives:
         # Create an edge between two existing nodes
@@ -577,12 +589,12 @@ class TestClient(unittest.TestCase):
             self.client.createEdge(source_key, node2.get_id(), node1.get_id())
 
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
         return edge
 
-
-    @profile
+    # @profile
     def test_edge_get(self):
         edge = self.test_edge_create()
         start = time.time()
@@ -610,9 +622,10 @@ class TestClient(unittest.TestCase):
             self.client.getEdge(uuid.uuid4().hex)
 
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
-    @profile
+    # @profile
     def test_edge_version_create(self):
         edge = self.test_edge_create()
         from_node_id = edge.get_from_node_id()
@@ -642,17 +655,18 @@ class TestClient(unittest.TestCase):
             msg="created edge_version's edge_id does not match id of edge"
         )
 
-        #create an edge_version for an edge that does not exist
+        # create an edge_version for an edge that does not exist
         with self.assertRaises(KeyError):
             self.client.createNodeVersion(uuid.uuid4().int, to_node_version.get_id(),
                                           from_node_version.get_id())
 
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
         return edge_version
 
-    @profile
+    # @profile
     def test_edge_version_get(self):
         edge = self.test_edge_create()
         from_node_id = edge.get_from_node_id()
@@ -665,13 +679,13 @@ class TestClient(unittest.TestCase):
                                                      from_node_version.get_id())
 
         start = time.time()
-        got_edge_version = self.client.getEdgeVersion(edge.get_id())
+        got_edge_version = self.client.getEdgeVersion(edge_version.get_id())
         self.assertTrue(
             got_edge_version is not None,
             msg='valid call to getEdgeVersion returned None'
         )
         self.assertTrue(
-            type(got_edge_version) == model.core.edge.EdgeVersion,
+            type(got_edge_version) == model.core.edge_version.EdgeVersion,
             msg="getEdgeVersion returned edge version that is of type '{}' rather than 'EdgeVersion'"
             .format(type(edge))
         )
@@ -681,9 +695,10 @@ class TestClient(unittest.TestCase):
         )
 
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
-    @profile
+    # @profile
     def test_edge_version_latest_get(self):
         n1 = self.test_node_create()
         n2 = self.test_node_create()
@@ -693,22 +708,22 @@ class TestClient(unittest.TestCase):
 
         edge = self.client.createEdge(sk1, n1.get_id(), n2.get_id())
         ev1 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id())
-        ev2 = self.client.createEdgeVersion(e1.get_id(), n1.get_id(), n2.get_id(), parentIds=ev1.get_id())
-        ev3 = self.client.createEdgeVersion(e1.get_id(), n1.get_id(), n2.get_id(), parentIds=ev2.get_id())
-        ev4 = self.client.createEdgeVersion(e1.get_id(), n1.get_id(), n2.get_id(), parentIds=ev3.get_id())
-        ev5 = self.client.createEdgeVersion(e1.get_id(), n1.get_id(), n2.get_id(), parentIds=ev3.get_id())
+        ev2 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[ev1.get_id(), ])
+        ev3 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[ev2.get_id(), ])
+        ev4 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[ev3.get_id(), ])
+        ev5 = self.client.createEdgeVersion(edge.get_id(), n1.get_id(), n2.get_id(), parentIds=[ev3.get_id(), ])
 
         start = time.time()
-        edge_versions = self.client.getEdgeLatestVersions(node.get_source_key())
+        edge_versions = self.client.getEdgeLatestVersions(edge.get_source_key())
 
         for edge_version in edge_versions:
             self.assertTrue(
                 edge_version is not None,
                 msg='getEdgeLatestVersions with edge_id={} returned None instead of a edge version'
-                .format(node.get_id())
+                .format(edge.get_id())
             )
             self.assertTrue(
-                type(edge_version) == model.core.node_version.EdgeVersion,
+                type(edge_version) == model.core.edge_version.EdgeVersion,
                 msg="getEdgeLatestVersions returned edgeVersion of type '{}' rather than 'EdgeVersion'"
                 .format(type(edge_version))
             )
@@ -723,17 +738,18 @@ class TestClient(unittest.TestCase):
         self.assertTrue(
             len(edge_versions) == 2,
             msg='getEdgeLatestVersions returned {} edge versions but there are 2 latest.'
-                .format(len(edge_versions))
+            .format(len(edge_versions))
         )
         self.assertTrue(
             edge_versions[0] != edge_versions[1],
             msg='getEdgeLatestVersions returned two edge versions that are equal but should be different'
         )
-        
-        elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
 
-    @profile
+        elapsed = time.time() - start
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
+
+    # @profile
     def test_lineage_edge_create(self):
         source_key = uuid.uuid4().hex
         start = time.time()
@@ -760,11 +776,12 @@ class TestClient(unittest.TestCase):
             self.client.createLineageEdge(source_key, source_key)
 
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
         return node
 
-    @profile
+    # @profile
     def test_lineage_edge_get(self):
         node = self.test_lineage_edge_create()
 
@@ -792,9 +809,10 @@ class TestClient(unittest.TestCase):
             self.client.getLineageEdge(uuid.uuid4().hex)
 
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
-    @profile
+    # @profile
     def test_lineage_edge_version_create(self):
         lineage_edge = self.test_lineage_edge_create()
         nv1 = self.test_node_version_create()
@@ -827,10 +845,15 @@ class TestClient(unittest.TestCase):
                                           nv1.get_id())
 
         elapsed = time.time() - start
-        print('Time elapsed is: ' + elapsed + " seconds")
+        if VERBOSE:
+            print('Time elapsed is: ' + str(elapsed) + " seconds")
 
         return edge_version
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--verbose', action='store_true', default=False)
+    args = parser.parse_args()
+    VERBOSE = args.verbose
     unittest.main()
