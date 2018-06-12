@@ -275,7 +275,7 @@ class TestClient(unittest.TestCase):
         nv4 = self.client.createNodeVersion(node.get_id(), parentIds=[nv2.get_id(), nv3.get_id()])
         nv5 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
         nv6 = self.client.createNodeVersion(node.get_id(), parentIds=[nv4.get_id()])
-
+        print(node.get_source_key())
         start = time.time()
 
         node_version = self.client.getNodeVersion(nv2.get_id())
