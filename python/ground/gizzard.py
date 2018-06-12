@@ -77,7 +77,7 @@ def gitdag(sourceKey, typ):
     for d in ld:
         if d['class'] == 'Merge':
             ms.append(d)
-        elif d['class'] == 'NodeVersion':
+        elif 'Version' in d['class']:
             nvs.append(d)
         else:
             raise ValueError("Unexepected class: {}".format(d['class']))
