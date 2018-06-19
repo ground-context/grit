@@ -1,7 +1,7 @@
-from ground.common.model.version.item import Item
+from grit.common.model.version.item import Item
 
 
-class Graph(Item):
+class Node(Item):
 
     def __init__(self, json_payload):
         super().__init__(json_payload)
@@ -10,13 +10,25 @@ class Graph(Item):
         self._source_key = json_payload.get('sourceKey', '')
 
     @classmethod
-    def from_graph(cls, graph_id, other_graph):
+    def from_node(cls, node_id, other_node):
         return cls({
-            'id': graph_id,
-            'tags': other_graph.get_tags(),
-            'name': other_graph.get_name(),
-            'sourceKey': other_graph.get_source_key(),
+            'id': node_id,
+            'tags': other_node.get_tags(),
+            'name': other_node.get_name(),
+            'sourceKey': other_node.get_source_key(),
         })
+
+    def to_dict(self):
+        d =  {
+            'id': self.get_id(),
+            'class': "Node",
+            'name' : self._name,
+            'sourceKey' : self._source_key
+        }
+        if self.get_tags():
+            d['tags'] = self.get_tags()
+
+        return d
 
     def get_item_id(self):
         return self.get_id()
@@ -29,7 +41,7 @@ class Graph(Item):
 
     def __eq__(self, other):
         return (
-            isinstance(other, Graph)
+            isinstance(other, Node)
             and self.get_name() == other.get_name()
             and self.get_source_key() == other.get_source_key()
             and self.get_item_id() == other._id

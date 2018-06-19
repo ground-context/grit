@@ -104,3 +104,6 @@ ENV/
 .idea/
 
 .DS_Store
+python/build/
+python/dist/
+python/grit_backend.egg-info

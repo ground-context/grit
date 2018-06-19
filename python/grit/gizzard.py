@@ -6,7 +6,7 @@ import uuid
 
 from typing import List
 
-from . import globals
+from grit import globals
 
 class chinto(object):
     def __init__(self, target):

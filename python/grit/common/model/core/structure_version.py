@@ -1,4 +1,4 @@
-from ground.common.model.version.version import Version
+from grit.common.model.version.version import Version
 
 
 class StructureVersion(Version):

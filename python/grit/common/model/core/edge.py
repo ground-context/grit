@@ -1,4 +1,4 @@
-from ground.common.model.version.item import Item
+from grit.common.model.version.item import Item
 
 
 class Edge(Item):

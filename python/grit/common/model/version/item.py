@@ -1,4 +1,4 @@
-from ground.common.model.version.tag import Tag
+from grit.common.model.version.tag import Tag
 
 class Item:
 

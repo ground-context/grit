@@ -1,5 +1,5 @@
-from ground.common.model.version.version import Version
-from ground.common.model.version.tag import Tag
+from grit.common.model.version.version import Version
+from grit.common.model.version.tag import Tag
 
 class RichVersion(Version):
 

@@ -9,305 +9,36 @@ import time
 
 from shutil import copyfile
 # noinspection PyUnresolvedReferences
-from ground.common.model.core.node import Node
+from grit.common.model.core.node import Node
 # noinspection PyUnresolvedReferences
-from ground.common.model.core.node_version import NodeVersion
+from grit.common.model.core.node_version import NodeVersion
 # noinspection PyUnresolvedReferences
-from ground.common.model.core.edge import Edge
+from grit.common.model.core.edge import Edge
 # noinspection PyUnresolvedReferences
-from ground.common.model.core.edge_version import EdgeVersion
+from grit.common.model.core.edge_version import EdgeVersion
 # noinspection PyUnresolvedReferences
-from ground.common.model.core.graph import Graph
+from grit.common.model.core.graph import Graph
 # noinspection PyUnresolvedReferences
-from ground.common.model.core.graph_version import GraphVersion
+from grit.common.model.core.graph_version import GraphVersion
 # noinspection PyUnresolvedReferences
-from ground.common.model.core.structure import Structure
+from grit.common.model.core.structure import Structure
 # noinspection PyUnresolvedReferences
-from ground.common.model.core.structure_version import StructureVersion
+from grit.common.model.core.structure_version import StructureVersion
 # noinspection PyUnresolvedReferences
-from ground.common.model.usage.lineage_edge import LineageEdge
+from grit.common.model.usage.lineage_edge import LineageEdge
 # noinspection PyUnresolvedReferences
-from ground.common.model.usage.lineage_edge_version import LineageEdgeVersion
+from grit.common.model.usage.lineage_edge_version import LineageEdgeVersion
 # noinspection PyUnresolvedReferences
-from ground.common.model.usage.lineage_graph import LineageGraph
+from grit.common.model.usage.lineage_graph import LineageGraph
 # noinspection PyUnresolvedReferences
-from ground.common.model.usage.lineage_graph_version import LineageGraphVersion
+from grit.common.model.usage.lineage_graph_version import LineageGraphVersion
 # noinspection PyUnresolvedReferences
-from ground.common.model.version.tag import Tag
+from grit.common.model.version.tag import Tag
 
-from . import globals
-from . import gizzard
+from grit import globals
+from grit import gizzard
 
-"""
-Abstract class: do not instantiate
-"""
-
-
-class GroundAPI:
-    headers = {"Content-type": "application/json"}
-
-    ### EDGES ###
-    def createEdge(self, sourceKey, fromNodeId, toNodeId, name="null", tags=None):
-        d = {
-            "sourceKey": sourceKey,
-            "fromNodeId": fromNodeId,
-            "toNodeId": toNodeId,
-            "name": name
-        }
-        if tags is not None:
-            d["tags"] = tags
-        return d
-
-    def createEdgeVersion(self, edgeId, toNodeVersionStartId, fromNodeVersionStartId, toNodeVersionEndId=None,
-                          fromNodeVersionEndId=None, reference=None, referenceParameters=None, tags=None,
-                          structureVersionId=None, parentIds=None):
-        d = {
-            "edgeId": edgeId,
-            "fromNodeVersionStartId": fromNodeVersionStartId,
-            "toNodeVersionStartId": toNodeVersionStartId
-        }
-        if toNodeVersionEndId is not None:
-            d["toNodeVersionEndId"] = toNodeVersionEndId
-        if fromNodeVersionEndId is not None:
-            d["fromNodeVersionEndId"] = fromNodeVersionEndId
-        if reference is not None:
-            d["reference"] = reference
-        if referenceParameters is not None:
-            d["referenceParameters"] = referenceParameters
-        if tags is not None:
-            d["tags"] = tags
-        if structureVersionId is not None:
-            d["structureVersionId"] = structureVersionId
-        if parentIds is not None:
-            d["parentIds"] = parentIds
-        return d
-
-    def getEdge(self, sourceKey):
-        raise NotImplementedError("Invalid call to GroundClient.getEdge")
-
-    def getEdgeLatestVersions(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getEdgeLatestVersions")
-
-    def getEdgeHistory(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getEdgeHistory")
-
-    def getEdgeVersion(self, edgeId):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getEdgeVersion")
-
-    ### NODES ###
-    def createNode(self, sourceKey, name="null", tags=None):
-        d = {
-            "sourceKey": sourceKey,
-            "name": name
-        }
-        if tags is not None:
-            d["tags"] = tags
-        return d
-
-    def createNodeVersion(self, nodeId, reference=None, referenceParameters=None, tags=None,
-                          structureVersionId=None, parentIds=None):
-        d = {
-            "nodeId": nodeId
-        }
-        if reference is not None:
-            d["reference"] = reference
-        if referenceParameters is not None:
-            d["referenceParameters"] = referenceParameters
-        if tags is not None:
-            d["tags"] = tags
-        if structureVersionId is not None:
-            d["structureVersionId"] = structureVersionId
-        if parentIds is not None:
-            d["parentIds"] = parentIds
-        return d
-
-    def getNode(self, sourceKey):
-        raise NotImplementedError("Invalid call to GroundClient.getNode")
-
-    def getNodeLatestVersions(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getNodeLatestVersions")
-
-    def getNodeHistory(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getNodeHistory")
-
-    def getNodeVersion(self, nodeId):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getNodeVersion")
-
-    def getNodeVersionAdjacentLineage(self, nodeId):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getNodeVersionAdjacentLineage")
-
-    ### GRAPHS ###
-    def createGraph(self, sourceKey, name="null", tags=None):
-        d = {
-            "sourceKey": sourceKey,
-            "name": name
-        }
-        if tags is not None:
-            d["tags"] = tags
-        return d
-
-    def createGraphVersion(self, graphId, edgeVersionIds, reference=None, referenceParameters=None,
-                           tags=None, structureVersionId=None, parentIds=None):
-        d = {
-            "graphId": graphId,
-            "edgeVersionIds": edgeVersionIds
-        }
-        if reference is not None:
-            d["reference"] = reference
-        if referenceParameters is not None:
-            d["referenceParameters"] = referenceParameters
-        if tags is not None:
-            d["tags"] = tags
-        if structureVersionId is not None:
-            d["structureVersionId"] = structureVersionId
-        if parentIds is not None:
-            d["parentIds"] = parentIds
-        return d
-
-    def getGraph(self, sourceKey):
-        raise NotImplementedError("Invalid call to GroundClient.getGraph")
-
-    def getGraphLatestVersions(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getGraphLatestVersions")
-
-    def getGraphHistory(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getGraphHistory")
-
-    def getGraphVersion(self, graphId):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getGraphVersion")
-
-    ### STRUCTURES ###
-    def createStructure(self, sourceKey, name="null", tags=None):
-        d = {
-            "sourceKey": sourceKey,
-            "name": name
-        }
-        if tags is not None:
-            d["tags"] = tags
-        return d
-
-    def createStructureVersion(self, structureId, attributes, parentIds=None):
-        d = {
-            "structureId": structureId,
-            "attributes": attributes
-        }
-        if parentIds is not None:
-            d["parentIds"] = parentIds
-        return d
-
-    def getStructure(self, sourceKey):
-        raise NotImplementedError("Invalid call to GroundClient.getStructure")
-
-    def getStructureLatestVersions(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getStructureLatestVersions")
-
-    def getStructureHistory(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getStructureHistory")
-
-    def getStructureVersion(self, structureId):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getStructureVersion")
-
-    ### LINEAGE EDGES ###
-    def createLineageEdge(self, sourceKey, name="null", tags=None):
-        d = {
-            "sourceKey": sourceKey,
-            "name": name
-        }
-        if tags is not None:
-            d["tags"] = tags
-        return d
-
-    def createLineageEdgeVersion(self, lineageEdgeId, toRichVersionId, fromRichVersionId, reference=None,
-                                 referenceParameters=None, tags=None, structureVersionId=None, parentIds=None):
-        d = {
-            "lineageEdgeId": lineageEdgeId,
-            "toRichVersionId": toRichVersionId,
-            "fromRichVersionId": fromRichVersionId
-        }
-        if reference is not None:
-            d["reference"] = reference
-        if referenceParameters is not None:
-            d["referenceParameters"] = referenceParameters
-        if tags is not None:
-            d["tags"] = tags
-        if structureVersionId is not None:
-            d["structureVersionId"] = structureVersionId
-        if parentIds is not None:
-            d["parentIds"] = parentIds
-        return d
-
-    def getLineageEdge(self, sourceKey):
-        raise NotImplementedError("Invalid call to GroundClient.getLineageEdge")
-
-    def getLineageEdgeLatestVersions(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getLineageEdgeLatestVersions")
-
-    def getLineageEdgeHistory(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getLineageEdgeHistory")
-
-    def getLineageEdgeVersion(self, lineageEdgeId):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getLineageEdgeVersion")
-
-    ### LINEAGE GRAPHS ###
-    def createLineageGraph(self, sourceKey, name="null", tags=None):
-        d = {
-            "sourceKey": sourceKey,
-            "name": name
-        }
-        if tags is not None:
-            d["tags"] = tags
-        return d
-
-    def createLineageGraphVersion(self, lineageGraphId, lineageEdgeVersionIds, reference=None,
-                                  referenceParameters=None, tags=None, structureVersionId=None, parentIds=None):
-        d = {
-            "lineageGraphId": lineageGraphId,
-            "lineageEdgeVersionIds": lineageEdgeVersionIds
-        }
-        if reference is not None:
-            d["reference"] = reference
-        if referenceParameters is not None:
-            d["referenceParameters"] = referenceParameters
-        if tags is not None:
-            d["tags"] = tags
-        if structureVersionId is not None:
-            d["structureVersionId"] = structureVersionId
-        if parentIds is not None:
-            d["parentIds"] = parentIds
-        return d
-
-    def getLineageGraph(self, sourceKey):
-        raise NotImplementedError("Invalid call to GroundClient.getLineageGraph")
-
-    def getLineageGraphLatestVersions(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getLineageGraphLatestVersions")
-
-    def getLineageGraphHistory(self, sourceKey):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getLineageGraphHistory")
-
-    def getLineageGraphVersion(self, lineageGraphId):
-        raise NotImplementedError(
-            "Invalid call to GroundClient.getLineageGraphVersion")
-
-class GitImplementation(GroundAPI):
+class GroundClient(object):
 
     def __init__(self):
 
@@ -629,16 +360,16 @@ class GitImplementation(GroundAPI):
 
 
     ### EDGES ###
-    def createEdge(self, sourceKey, fromNodeId, toNodeId, name="null", tags=None):
-        if not self._find_file(sourceKey, Edge.__name__):
-            fromNodeId = str(fromNodeId)
-            toNodeId = str(toNodeId)
+    def create_edge(self, source_key, name, from_node_id, to_node_id, tags=None):
+        if not self._find_file(source_key, Edge.__name__):
+            fromNodeId = str(from_node_id)
+            toNodeId = str(to_node_id)
 
             # Enforcing some integrity constraints
             self._read_map_index(fromNodeId)
             self._read_map_index(toNodeId)
 
-            body = self._create_item(Edge.__name__, sourceKey, name, tags)
+            body = self._create_item(Edge.__name__, source_key, name, tags)
             body["fromNodeId"] = fromNodeId
             body["toNodeId"] = toNodeId
             edge = Edge(body)
@@ -647,35 +378,43 @@ class GitImplementation(GroundAPI):
             write["fromNodeId"] = edge.get_from_node_id()
             write["toNodeId"] = edge.get_to_node_id()
             write = {"Item": write, "ItemVersion": {}}
-            self._write_files(sourceKey, write, Edge.__name__)
-            self._map_index(edgeId, sourceKey)
+            self._write_files(source_key, write, Edge.__name__)
+            self._map_index(edgeId, source_key)
         else:
             raise FileExistsError(
-                "Edge with source key '{}' already exists.".format(sourceKey))
+                "Edge with source key '{}' already exists.".format(source_key))
 
         return edge
 
-    def createEdgeVersion(self, edgeId, toNodeVersionStartId, fromNodeVersionStartId, toNodeVersionEndId=None,
-                          fromNodeVersionEndId=None, reference=None, referenceParameters=None, tags=None,
-                          structureVersionId=None, parentIds=None):
+    def create_edge_version(self,
+                            edge_id,
+                            from_node_version_start_id,
+                            to_node_version_start_id,
+                            from_node_version_end_id=-1,
+                            to_node_version_end_id=-1,
+                            reference=None,
+                            reference_parameters=None,
+                            tags=None,
+                            structure_version_id=-1,
+                            parent_ids=None):
 
         # Missing integrity constraint checks:
         # Passed in node versions must be versions of nodes that are linked by an edge with edgeId == edgeId
 
-        body = self._get_rich_version_json(EdgeVersion.__name__, reference, referenceParameters,
-                                           tags, structureVersionId, parentIds)
+        body = self._get_rich_version_json(EdgeVersion.__name__, reference, reference_parameters,
+                                           tags, structure_version_id, parent_ids)
 
-        body["edgeId"] = str(edgeId)
-        body["toNodeVersionStartId"] = str(toNodeVersionStartId)
-        body["fromNodeVersionStartId"] = str(fromNodeVersionStartId)
+        body["edgeId"] = str(edge_id)
+        body["toNodeVersionStartId"] = str(to_node_version_start_id)
+        body["fromNodeVersionStartId"] = str(from_node_version_start_id)
 
-        if toNodeVersionEndId and int(toNodeVersionEndId) > 0:
-            body["toNodeVersionEndId"] = str(toNodeVersionEndId)
+        if to_node_version_end_id and int(to_node_version_end_id) > 0:
+            body["toNodeVersionEndId"] = str(to_node_version_end_id)
 
-        if fromNodeVersionEndId and int(fromNodeVersionEndId) > 0:
-            body["fromNodeVersionEndId"] = str(fromNodeVersionEndId)
+        if from_node_version_end_id and int(from_node_version_end_id) > 0:
+            body["fromNodeVersionEndId"] = str(from_node_version_end_id)
 
-        sourceKey = self._read_map_index(edgeId)
+        sourceKey = self._read_map_index(edge_id)
         edge = self.getEdge(sourceKey)
 
         edgeVersion = EdgeVersion(body)
@@ -688,30 +427,30 @@ class GitImplementation(GroundAPI):
 
         return edgeVersion
 
-    def getEdge(self, sourceKey):
-        if not self._find_file(sourceKey, Edge.__name__):
+    def get_edge(self, source_key):
+        if not self._find_file(source_key, Edge.__name__):
             raise FileNotFoundError(
-                "Edge with source key '{}' does not exist.".format(sourceKey))
-        return Edge(self._read_files(sourceKey, Edge.__name__, "Item"))
+                "Edge with source key '{}' does not exist.".format(source_key))
+        return Edge(self._read_files(source_key, Edge.__name__, "Item"))
 
 
-    def getEdgeLatestVersions(self, sourceKey):
+    def get_edge_latest_versions(self, source_key):
         latest_versions = []
-        for branch, commit in gizzard.get_branch_commits(sourceKey, 'edge'):
-            gizzard.runThere(['git', 'checkout', branch], sourceKey, 'edge')
-            readfiles = self._read_files(sourceKey, Edge.__name__, "ItemVersion")
+        for branch, commit in gizzard.get_branch_commits(source_key, 'edge'):
+            gizzard.runThere(['git', 'checkout', branch], source_key, 'edge')
+            readfiles = self._read_files(source_key, Edge.__name__, "ItemVersion")
             ev = EdgeVersion(readfiles)
             latest_versions.append(ev)
 
         return latest_versions
 
-    def getEdgeHistory(self, sourceKey):
-        return gizzard.gitdag(sourceKey, 'edge')
+    def get_edge_history(self, source_key):
+        return gizzard.gitdag(source_key, 'edge')
 
-    def getEdgeVersion(self, edgeVersionId):
-        sourceKey = self._read_map_version_index(edgeVersionId)
+    def get_edge_version(self, id):
+        sourceKey = self._read_map_version_index(id)
         for commit, id in gizzard.get_ver_commits(sourceKey, 'edge'):
-            if id == int(edgeVersionId):
+            if id == int(id):
                 with gizzard.chinto(os.path.join(globals.GRIT_D, 'edge', sourceKey)):
                     with gizzard.chkinto(commit):
                         readfiles = self._read_files(sourceKey, Edge.__name__, "ItemVersion")
@@ -720,29 +459,35 @@ class GitImplementation(GroundAPI):
         raise RuntimeError("Reached invalid line in getEdgeVersion")
 
     ### NODES ###
-    def createNode(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, Node.__name__):
-            body = self._create_item(Node.__name__, sourceKey, name, tags)
+    def create_node(self, source_key, name="null", tags=None):
+        if not self._find_file(source_key, Node.__name__):
+            body = self._create_item(Node.__name__, source_key, name, tags)
             node = Node(body)
             nodeId = str(node.get_item_id())
             write = self._deconstruct_item(node)
             write = {"Item" : write, "ItemVersion": {}}
-            self._write_files(sourceKey, write, Node.__name__)
-            self._map_index(nodeId, sourceKey)
+            self._write_files(source_key, write, Node.__name__)
+            self._map_index(nodeId, source_key)
         else:
             raise FileExistsError(
-                "Node with source key '{}' already exists.".format(sourceKey))
+                "Node with source key '{}' already exists.".format(source_key))
 
         return node
 
-    def createNodeVersion(self, nodeId, reference=None, referenceParameters=None, tags=None,
-                          structureVersionId=None, parentIds=None):
-        body = self._get_rich_version_json(NodeVersion.__name__, reference, referenceParameters,
-                                           tags, structureVersionId, parentIds)
+    def create_node_version(self,
+                            node_id,
+                            reference=None,
+                            reference_parameters=None,
+                            tags=None,
+                            structure_version_id=-1,
+                            parent_ids=None):
 
-        body["nodeId"] = str(nodeId)
+        body = self._get_rich_version_json(NodeVersion.__name__, reference, reference_parameters,
+                                           tags, structure_version_id, parent_ids)
 
-        sourceKey = self._read_map_index(nodeId)
+        body["nodeId"] = str(node_id)
+
+        sourceKey = self._read_map_index(node_id)
         node = self.getNode(sourceKey)
 
         nodeVersion = NodeVersion(body)
@@ -755,28 +500,28 @@ class GitImplementation(GroundAPI):
         return nodeVersion
 
 
-    def getNode(self, sourceKey):
-        if not self._find_file(sourceKey, Node.__name__):
+    def get_node(self, source_key):
+        if not self._find_file(source_key, Node.__name__):
             raise FileNotFoundError(
-                "Node with source key '{}' does not exist.".format(sourceKey))
-        return Node(self._read_files(sourceKey, Node.__name__, "Item"))
+                "Node with source key '{}' does not exist.".format(source_key))
+        return Node(self._read_files(source_key, Node.__name__, "Item"))
 
-    def getNodeLatestVersions(self, sourceKey):
+    def get_node_latest_versions(self, source_key):
         latest_versions = []
-        for branch, commit in gizzard.get_branch_commits(sourceKey, 'node'):
-            gizzard.runThere(['git', 'checkout', branch], sourceKey, 'node')
-            readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
+        for branch, commit in gizzard.get_branch_commits(source_key, 'node'):
+            gizzard.runThere(['git', 'checkout', branch], source_key, 'node')
+            readfiles = self._read_files(source_key, Node.__name__, "ItemVersion")
             nv = NodeVersion(readfiles)
             latest_versions.append(nv)
         return latest_versions
 
-    def getNodeHistory(self, sourceKey):
-        return gizzard.gitdag(sourceKey, 'node')
+    def get_node_history(self, source_key):
+        return gizzard.gitdag(source_key, 'node')
 
-    def getNodeVersion(self, nodeVersionId):
-        sourceKey = self._read_map_version_index(nodeVersionId)
+    def get_node_version(self, id):
+        sourceKey = self._read_map_version_index(id)
         for commit, id in gizzard.get_ver_commits(sourceKey, 'node'):
-            if id == int(nodeVersionId):
+            if id == int(id):
                 with gizzard.chinto(os.path.join(globals.GRIT_D, 'node', sourceKey)):
                     with gizzard.chkinto(commit):
                         readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
@@ -784,7 +529,7 @@ class GitImplementation(GroundAPI):
                 return nv
         raise RuntimeError("Reached invalid line in getNodeVersion")
 
-    def getNodeVersionAdjacentLineage(self, nodeVersionId):
+    def get_node_version_adjacent_lineage(self, id):
         # All incoming and outgoing edges
         # Delaying implementation
         lineageEdgeVersionMap = self._read_all_version_ever(LineageEdgeVersion.__name__)
@@ -792,15 +537,15 @@ class GitImplementation(GroundAPI):
         adjacent = []
         for levId in lineageEdgeVersions:
             lev = lineageEdgeVersionMap[levId]
-            if ((nodeVersionId == lev['toRichVersionId']) or (nodeVersionId == lev['fromRichVersionId'])):
+            if ((id == lev['toRichVersionId']) or (id == lev['fromRichVersionId'])):
                 adjacent.append(lev)
         return adjacent
 
 
     ### GRAPHS ###
-    def createGraph(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, Graph.__name__, "Item"):
-            body = self._create_item(Graph.__name__, sourceKey, name, tags)
+    def create_graph(self, source_key, name="null", tags=None):
+        if not self._find_file(source_key, Graph.__name__, "Item"):
+            body = self._create_item(Graph.__name__, source_key, name, tags)
             graph = Graph(body)
             graphId = graph.get_item_id()
             #self.graphs[sourceKey] = graph
@@ -809,24 +554,29 @@ class GitImplementation(GroundAPI):
             self._write_files(graphId, write)
             self._commit(graphId, Graph.__name__)
         else:
-            graph = self._read_files(sourceKey, Graph.__name__)
+            graph = self._read_files(source_key, Graph.__name__)
             graphId = graph['id']
 
         return graphId
 
 
-    def createGraphVersion(self, graphId, edgeVersionIds, reference=None,
-                           referenceParameters=None, tags=None, structureVersionId=None, parentIds=None):
-        body = self._get_rich_version_json(GraphVersion.__name__, reference, referenceParameters,
-                                           tags, structureVersionId, parentIds)
+    def create_graph_version(self,
+                             graph_id,
+                             edge_version_ids,
+                             reference=None,
+                             reference_parameters=None,
+                             tags=None,
+                             structure_version_id=-1,
+                             parent_ids=None):
 
-        body["graphId"] = graphId
-        body["edgeVersionIds"] = edgeVersionIds
+        body = self._get_rich_version_json(GraphVersion.__name__, reference, reference_parameters,
+                                           tags, structure_version_id, parent_ids)
+
+        body["graphId"] = graph_id
+        body["edgeVersionIds"] = edge_version_ids
 
         graphVersion = GraphVersion(body)
         graphVersionId = graphVersion.get_id()
-
-        #self.graphVersions[graphVersionId] = graphVersion
 
         write = self._deconstruct_rich_version_json(body)
         self._write_files(graphVersionId, write)
@@ -834,11 +584,11 @@ class GitImplementation(GroundAPI):
 
         return graphVersionId
 
-    def getGraph(self, sourceKey):
-        return self._read_files(sourceKey, Graph.__name__)
+    def get_graph(self, source_key):
+        return self._read_files(source_key, Graph.__name__)
 
-    def getGraphLatestVersions(self, sourceKey):
-        graphVersionMap = self._read_all_version(sourceKey, GraphVersion.__name__, Graph.__name__)
+    def get_graph_latest_versions(self, source_key):
+        graphVersionMap = self._read_all_version(source_key, GraphVersion.__name__, Graph.__name__)
         graphVersions = set(list(graphVersionMap.keys()))
         is_parent = set([])
         for evId in graphVersions:
@@ -849,8 +599,8 @@ class GitImplementation(GroundAPI):
                     is_parent |= {parentId, }
         return [graphVersionMap[Id] for Id in list(graphVersions - is_parent)]
 
-    def getGraphHistory(self, sourceKey):
-        graphVersionMap = self._read_all_version(sourceKey, GraphVersion.__name__, Graph.__name__)
+    def get_graph_history(self, source_key):
+        graphVersionMap = self._read_all_version(source_key, GraphVersion.__name__, Graph.__name__)
         graphVersions = set(list(graphVersionMap.keys()))
         parentChild = {}
         for evId in graphVersions:
@@ -864,13 +614,13 @@ class GitImplementation(GroundAPI):
                     parentChild[str(parentId)] = ev['id']
         return parentChild
 
-    def getGraphVersion(self, graphVersionId):
-        return self._read_version(graphVersionId, GraphVersion.__name__)
+    def get_graph_version(self, id):
+        return self._read_version(id, GraphVersion.__name__)
 
     ### STRUCTURES ###
-    def createStructure(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, Structure.__name__):
-            body = self._create_item(Structure.__name__, sourceKey, name, tags)
+    def create_structure(self, source_key, name="null", tags=None):
+        if not self._find_file(source_key, Structure.__name__):
+            body = self._create_item(Structure.__name__, source_key, name, tags)
             structure = Structure(body)
             structureId = structure.get_item_id()
             #self.structures[sourceKey] = structure
@@ -879,22 +629,26 @@ class GitImplementation(GroundAPI):
             self._write_files(structureId, write)
             self._commit(structureId, Structure.__name__)
         else:
-            structure = self._read_files(sourceKey, Structure.__name__)
+            structure = self._read_files(source_key, Structure.__name__)
             structureId = structure['id']
 
         return structureId
 
 
-    def createStructureVersion(self, structureId, attributes, parentIds=None):
+    def create_structure_version(self,
+                                 structure_id,
+                                 attributes,
+                                 parent_ids=None):
+
         body = {
             "id": self._gen_id(),
             "class":StructureVersion.__name__,
-            "structureId": structureId,
+            "structureId": structure_id,
             "attributes": attributes
         }
 
-        if parentIds:
-            body["parentIds"] = parentIds
+        if parent_ids:
+            body["parentIds"] = parent_ids
 
         structureVersion = StructureVersion(body)
         structureVersionId = structureVersion.get_id()
@@ -907,11 +661,11 @@ class GitImplementation(GroundAPI):
 
         return structureVersionId
 
-    def getStructure(self, sourceKey):
-        return self._read_files(sourceKey, Structure.__name__)
+    def get_structure(self, source_key):
+        return self._read_files(source_key, Structure.__name__)
 
-    def getStructureLatestVersions(self, sourceKey):
-        structureVersionMap = self._read_all_version(sourceKey, StructureVersion.__name__, Structure.__name__)
+    def get_structure_latest_versions(self, source_key):
+        structureVersionMap = self._read_all_version(source_key, StructureVersion.__name__, Structure.__name__)
         structureVersions = set(list(structureVersionMap.keys()))
         is_parent = set([])
         for evId in structureVersions:
@@ -922,8 +676,8 @@ class GitImplementation(GroundAPI):
                     is_parent |= {parentId, }
         return [structureVersionMap[Id] for Id in list(structureVersions - is_parent)]
 
-    def getStructureHistory(self, sourceKey):
-        structureVersionMap = self._read_all_version(sourceKey, StructureVersion.__name__, Structure.__name__)
+    def get_structure_history(self, source_key):
+        structureVersionMap = self._read_all_version(source_key, StructureVersion.__name__, Structure.__name__)
         structureVersions = set(list(structureVersionMap.keys()))
         parentChild = {}
         for evId in structureVersions:
@@ -937,37 +691,45 @@ class GitImplementation(GroundAPI):
                     parentChild[str(parentId)] = ev['id']
         return parentChild
 
-    def getStructureVersion(self, structureVersionId):
-        return self._read_version(structureVersionId, StructureVersion.__name__)
+    def get_structure_version(self, id):
+        return self._read_version(id, StructureVersion.__name__)
 
 
     ### LINEAGE EDGES ###
-    def createLineageEdge(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, LineageEdge.__name__):
-            body = self._create_item(LineageEdge.__name__, sourceKey, name, tags)
+    def create_lineage_edge(self, source_key, name="null", tags=None):
+        if not self._find_file(source_key, LineageEdge.__name__):
+            body = self._create_item(LineageEdge.__name__, source_key, name, tags)
             lineageEdge = LineageEdge(body)
             lineageEdgeId = str(lineageEdge.get_id())
             write = self._deconstruct_item(lineageEdge)
-            write =  {"Item" : write, "ItemVersion": {}}
-            self._write_files(sourceKey, write, LineageEdge.__name__)
-            self._map_index(lineageEdgeId, sourceKey)
+            write = {"Item": write, "ItemVersion": {}}
+            self._write_files(source_key, write, LineageEdge.__name__)
+            self._map_index(lineageEdgeId, source_key)
         else:
             raise FileExistsError(
-                "Lineage Edge with source key '{}' already exists.".format(sourceKey))
+                "Lineage Edge with source key '{}' already exists.".format(source_key))
 
         return lineageEdge
 
 
-    def createLineageEdgeVersion(self, lineageEdgeId, toRichVersionId, fromRichVersionId, reference=None,
-                                 referenceParameters=None, tags=None, structureVersionId=None, parentIds=None):
-        body = self._get_rich_version_json(LineageEdgeVersion.__name__, reference, referenceParameters,
-                                           tags, structureVersionId, parentIds)
+    def create_lineage_edge_version(self,
+                                    edge_id,
+                                    to_rich_version_id,
+                                    from_rich_version_id,
+                                    reference=None,
+                                    reference_parameters=None,
+                                    tags=None,
+                                    structure_version_id=-1,
+                                    parent_ids=None):
 
-        body["lineageEdgeId"] = lineageEdgeId
-        body["toRichVersionId"] = toRichVersionId
-        body["fromRichVersionId"] = fromRichVersionId
+        body = self._get_rich_version_json(LineageEdgeVersion.__name__, reference, reference_parameters,
+                                           tags, structure_version_id, parent_ids)
 
-        sourceKey = self._read_map_index(lineageEdgeId)
+        body["lineageEdgeId"] = edge_id
+        body["toRichVersionId"] = to_rich_version_id
+        body["fromRichVersionId"] = from_rich_version_id
+
+        sourceKey = self._read_map_index(edge_id)
         lineage_edge = self.getLineageEdge(sourceKey)
 
         lineageEdgeVersion = LineageEdgeVersion(body)
@@ -980,29 +742,29 @@ class GitImplementation(GroundAPI):
 
         return lineageEdgeVersion
 
-    def getLineageEdge(self, sourceKey):
-        if not self._find_file(sourceKey, LineageEdge.__name__):
+    def get_lineage_edge(self, source_key):
+        if not self._find_file(source_key, LineageEdge.__name__):
             raise FileNotFoundError(
-                "Lineage Edge with source key '{}' does not exist".format(sourceKey))
+                "Lineage Edge with source key '{}' does not exist".format(source_key))
 
-        return LineageEdge(self._read_files(sourceKey, LineageEdge.__name__, "Item"))
+        return LineageEdge(self._read_files(source_key, LineageEdge.__name__, "Item"))
 
-    def getLineageEdgeLatestVersions(self, sourceKey):
+    def get_lineage_edge_latest_versions(self, source_key):
         latest_versions = []
-        for branch, commit in gizzard.get_branch_commits(sourceKey, 'lineage_edge'):
-            gizzard.runThere(['git', 'checkout', branch], sourceKey, 'lineage_edge')
-            readfiles = self._read_files(sourceKey, LineageEdge.__name__, "ItemVersion")
+        for branch, commit in gizzard.get_branch_commits(source_key, 'lineage_edge'):
+            gizzard.runThere(['git', 'checkout', branch], source_key, 'lineage_edge')
+            readfiles = self._read_files(source_key, LineageEdge.__name__, "ItemVersion")
             lev = LineageEdgeVersion(readfiles)
             latest_versions.append(lev)
         return latest_versions
 
-    def getLineageEdgeHistory(self, sourceKey):
-        return gizzard.gitdag(sourceKey, 'lineage_edge')
+    def get_lineage_edge_history(self, source_key):
+        return gizzard.gitdag(source_key, 'lineage_edge')
 
-    def getLineageEdgeVersion(self, lineageEdgeVersionId):
-        sourceKey = self._read_map_version_index(lineageEdgeVersionId)
+    def get_lineage_edge_version(self, id):
+        sourceKey = self._read_map_version_index(id)
         for commit, id in gizzard.get_ver_commits(sourceKey, 'lineage_edge'):
-            if id == int(lineageEdgeVersionId):
+            if id == int(id):
                 with gizzard.chinto(os.path.join(globals.GRIT_D, 'lineage_edge', sourceKey)):
                     with gizzard.chkinto(commit):
                         readfiles = self._read_files(sourceKey, LineageEdge.__name__, "ItemVersion")
@@ -1011,35 +773,38 @@ class GitImplementation(GroundAPI):
         raise RuntimeError("Reached invalid line in getNodeVersion")
 
     ### LINEAGE GRAPHS ###
-    def createLineageGraph(self, sourceKey, name="null", tags=None):
-        if not self._find_file(sourceKey, LineageGraph.__name__):
-            body = self._create_item(LineageGraph.__name__, sourceKey, name, tags)
+    def create_lineage_graph(self, source_key, name="null", tags=None):
+        if not self._find_file(source_key, LineageGraph.__name__):
+            body = self._create_item(LineageGraph.__name__, source_key, name, tags)
             lineageGraph = LineageGraph(body)
             lineageGraphId = lineageGraph.get_id()
-            #self.lineageGraphs[sourceKey] = lineageGraph
-            #self.lineageGraphs[lineageGraphId] = lineageGraph
             write = self._deconstruct_item(lineageGraph)
             self._write_files(lineageGraphId, write)
             self._commit(lineageGraphId, LineageGraph.__name__)
         else:
-            lineageGraph = self._read_files(sourceKey, LineageGraph.__name__)
+            lineageGraph = self._read_files(source_key, LineageGraph.__name__)
             lineageGraphId = lineageGraph['id']
 
         return lineageGraphId
 
 
-    def createLineageGraphVersion(self, lineageGraphId, lineageEdgeVersionIds, reference=None,
-                                  referenceParameters=None, tags=None, structureVersionId=None, parentIds=None):
-        body = self._get_rich_version_json(LineageGraphVersion.__name__, reference, referenceParameters,
-                                           tags, structureVersionId, parentIds)
+    def create_lineage_graph_version(self,
+                                     lineage_graph_id,
+                                     lineage_edge_version_ids,
+                                     reference=None,
+                                     reference_parameters=None,
+                                     tags=None,
+                                     structure_version_id=-1,
+                                     parent_ids=None):
+    
+        body = self._get_rich_version_json(LineageGraphVersion.__name__, reference, reference_parameters,
+                                           tags, structure_version_id, parent_ids)
 
-        body["lineageGraphId"] = lineageGraphId
-        body["lineageEdgeVersionIds"] = lineageEdgeVersionIds
+        body["lineageGraphId"] = lineage_graph_id
+        body["lineageEdgeVersionIds"] = lineage_edge_version_ids
 
         lineageGraphVersion = LineageGraphVersion(body)
         lineageGraphVersionId = lineageGraphVersion.get_id()
-
-        #self.lineageGraphVersions[lineageGraphVersionId] = lineageGraphVersion
 
         write = self._deconstruct_rich_version_json(body)
         self._write_files(lineageGraphVersionId, write)
@@ -1047,11 +812,11 @@ class GitImplementation(GroundAPI):
 
         return lineageGraphVersionId
 
-    def getLineageGraph(self, sourceKey):
-        return self._read_files(sourceKey, LineageGraph.__name__)
+    def get_lineage_graph(self, source_key):
+        return self._read_files(source_key, LineageGraph.__name__)
 
-    def getLineageGraphLatestVersions(self, sourceKey):
-        lineageGraphVersionMap = self._read_all_version(sourceKey, LineageGraphVersion.__name__, LineageGraph.__name__)
+    def get_lineage_graph_latest_versions(self, source_key):
+        lineageGraphVersionMap = self._read_all_version(source_key, LineageGraphVersion.__name__, LineageGraph.__name__)
         lineageGraphVersions = set(list(lineageGraphVersionMap.keys()))
         is_parent = set([])
         for evId in lineageGraphVersions:
@@ -1062,8 +827,8 @@ class GitImplementation(GroundAPI):
                     is_parent |= {parentId, }
         return [lineageGraphVersionMap[Id] for Id in list(lineageGraphVersions - is_parent)]
 
-    def getLineageGraphHistory(self, sourceKey):
-        lineageGraphVersionMap = self._read_all_version(sourceKey, LineageGraphVersion.__name__, LineageGraph.__name__)
+    def get_lineage_graph_history(self, source_key):
+        lineageGraphVersionMap = self._read_all_version(source_key, LineageGraphVersion.__name__, LineageGraph.__name__)
         lineageGraphVersions = set(list(lineageGraphVersionMap.keys()))
         parentChild = {}
         for evId in lineageGraphVersions:
@@ -1077,93 +842,5 @@ class GitImplementation(GroundAPI):
                     parentChild[str(parentId)] = ev['id']
         return parentChild
 
-    def getLineageGraphVersion(self, lineageGraphVersionId):
-        return self._read_version(lineageGraphVersionId, LineageGraphVersion.__name__)
-
-    """
-    def commit(self):
-        stage = []
-        for kee in self.graph.ids:
-            if kee in self.graph.nodes:
-                serial = self.graph.nodes[kee].to_json()
-            elif kee in self.graph.nodeVersions:
-                serial = self.graph.nodeVersions[kee].to_json()
-            elif kee in self.graph.edges:
-                serial = self.graph.edges[kee].to_json()
-            elif kee in self.graph.edgeVersions:
-                serial = self.graph.edgeVersions[kee].to_json()
-            elif kee in self.graph.graphs:
-                serial = self.graph.graphs[kee].to_json()
-            elif kee in self.graph.graphVersions:
-                serial = self.graph.graphVersions[kee].to_json()
-            elif kee in self.graph.structures:
-                serial = self.graph.structures[kee].to_json()
-            elif kee in self.graph.structureVersions:
-                serial = self.graph.structureVersions[kee].to_json()
-            elif kee in self.graph.lineageEdges:
-                serial = self.graph.lineageEdges[kee].to_json()
-            elif kee in self.graph.lineageEdgeVersions:
-                serial = self.graph.lineageEdgeVersions[kee].to_json()
-            elif kee in self.graph.lineageGraphs:
-                serial = self.graph.lineageGraphs[kee].to_json()
-            else:
-                serial = self.graph.lineageGraphVersions[kee].to_json()
-            assert serial is not None
-            with open(str(kee) + '.json', 'w') as f:
-                f.write(serial)
-            stage.append(str(kee) + '.json')
-        repo = git.Repo.init(os.getcwd())
-        repo.index.add(stage)
-        repo.index.commit("ground commit")
-        tree = repo.tree()
-        with open('.jarvis', 'w') as f:
-            for obj in tree:
-                commithash = self.__run_proc__("git log " + obj.path).replace('\n', ' ').split()[1]
-                if obj.path != '.jarvis':
-                    f.write(obj.path + " " + commithash + "\n")
-        repo.index.add(['.jarvis'])
-        repo.index.commit('.jarvis commit')
-
-    def load(self):
-        if self.graph.ids:
-            return
-        os.chdir('../')
-
-        def is_number(s):
-            try:
-                float(s)
-                return True
-            except ValueError:
-                return False
-
-        listdir = [x for x in filter(is_number, os.listdir())]
-
-        prevDir = str(len(listdir) - 1)
-        os.chdir(prevDir)
-        for _, _, filenames in os.walk('.'):
-            for filename in filenames:
-                filename = filename.split('.')
-                if filename[-1] == 'json':
-                    filename = '.'.join(filename)
-                    with open(filename, 'r') as f:
-                        self.to_class(json.loads(f.read()))
-        os.chdir('../' + str(int(prevDir) + 1))
-    """
-
-class GroundImplementation(GroundAPI):
-    def __init__(self, host='localhost', port=9000):
-        self.host = host
-        self.port = str(port)
-        self.url = "http://" + self.host + ":" + self.port
-
-
-class GroundClient(GroundAPI):
-    def __new__(*args, **kwargs):
-        if args and args[1].strip().lower() == 'git':
-            return GitImplementation(**kwargs)
-        elif args and args[1].strip().lower() == 'ground':
-            # EXAMPLE CALL: GroundClient('ground', host='localhost', port=9000)
-            return GroundImplementation(**kwargs)
-        else:
-            raise ValueError(
-                "Backend not supported. Please choose 'git' or 'ground'")
+    def get_lineage_graph_version(self, id):
+        return self._read_version(id, LineageGraphVersion.__name__)

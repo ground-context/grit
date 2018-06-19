@@ -1,4 +1,4 @@
-from ground.common.model.core.rich_version import RichVersion
+from grit.common.model.core.rich_version import RichVersion
 
 
 class LineageEdgeVersion(RichVersion):
