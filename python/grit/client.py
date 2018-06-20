@@ -439,8 +439,9 @@ class GroundClient(object):
         for branch, commit in gizzard.get_branch_commits(source_key, 'edge'):
             gizzard.runThere(['git', 'checkout', branch], source_key, 'edge')
             readfiles = self._read_files(source_key, Edge.__name__, "ItemVersion")
-            ev = EdgeVersion(readfiles)
-            latest_versions.append(ev)
+            if readfiles:
+                ev = EdgeVersion(readfiles)
+                latest_versions.append(ev)
 
         return latest_versions
 
@@ -511,8 +512,9 @@ class GroundClient(object):
         for branch, commit in gizzard.get_branch_commits(source_key, 'node'):
             gizzard.runThere(['git', 'checkout', branch], source_key, 'node')
             readfiles = self._read_files(source_key, Node.__name__, "ItemVersion")
-            nv = NodeVersion(readfiles)
-            latest_versions.append(nv)
+            if readfiles:
+                nv = NodeVersion(readfiles)
+                latest_versions.append(nv)
         return latest_versions
 
     def get_node_history(self, source_key):
@@ -754,8 +756,9 @@ class GroundClient(object):
         for branch, commit in gizzard.get_branch_commits(source_key, 'lineage_edge'):
             gizzard.runThere(['git', 'checkout', branch], source_key, 'lineage_edge')
             readfiles = self._read_files(source_key, LineageEdge.__name__, "ItemVersion")
-            lev = LineageEdgeVersion(readfiles)
-            latest_versions.append(lev)
+            if readfiles:
+                lev = LineageEdgeVersion(readfiles)
+                latest_versions.append(lev)
         return latest_versions
 
     def get_lineage_edge_history(self, source_key):
