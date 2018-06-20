@@ -1,11 +1,8 @@
 # /usr/bin/env python3
-import requests
 import json
-import numpy as np
 import os
 import git
 import subprocess
-import time
 
 from shutil import copyfile
 # noinspection PyUnresolvedReferences
@@ -415,7 +412,7 @@ class GroundClient(object):
             body["fromNodeVersionEndId"] = str(from_node_version_end_id)
 
         sourceKey = self._read_map_index(edge_id)
-        edge = self.getEdge(sourceKey)
+        edge = self.get_edge(sourceKey)
 
         edgeVersion = EdgeVersion(body)
         edgeVersionId = str(edgeVersion.get_id())
@@ -489,7 +486,7 @@ class GroundClient(object):
         body["nodeId"] = str(node_id)
 
         sourceKey = self._read_map_index(node_id)
-        node = self.getNode(sourceKey)
+        node = self.get_node(sourceKey)
 
         nodeVersion = NodeVersion(body)
         nodeVersionId = str(nodeVersion.get_id())
@@ -732,7 +729,7 @@ class GroundClient(object):
         body["fromRichVersionId"] = from_rich_version_id
 
         sourceKey = self._read_map_index(edge_id)
-        lineage_edge = self.getLineageEdge(sourceKey)
+        lineage_edge = self.get_lineage_edge(sourceKey)
 
         lineageEdgeVersion = LineageEdgeVersion(body)
         lineageEdgeVersionId = str(lineageEdgeVersion.get_id())
