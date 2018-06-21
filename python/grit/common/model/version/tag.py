@@ -1,3 +1,6 @@
+import copy
+from typing import Dict
+
 class Tag:
 
     def __init__(self, json_payload):
@@ -13,6 +16,22 @@ class Tag:
 
     def get_value(self):
         return self._val
+
+    def to_json(self):
+        d = {}
+        d["id"] = self._id
+        d["key"] = self._key
+        if isinstance(self._val, Tag):
+            d["value"] = self._val.to_json()
+        elif isinstance(self._val, Dict):
+            t = copy.deepcopy(self._val)
+            for k in t:
+                t[k] = t[k].to_json()
+            d["value"] = t
+        else:
+            d['value'] = self._val
+
+        return d
 
     def __eq__(self, other):
         return (

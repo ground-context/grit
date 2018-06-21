@@ -1,4 +1,5 @@
 from grit.common.model.version.item import Item
+from grit.common.model.version.tag import Tag
 
 
 class Node(Item):
@@ -26,7 +27,10 @@ class Node(Item):
             'sourceKey' : self._source_key
         }
         if self.get_tags():
-            d['tags'] = self.get_tags()
+            t = self.get_tags()
+            for k in t:
+                t[k] = t[k].to_json()
+            d['tags'] = t
 
         return d
 
