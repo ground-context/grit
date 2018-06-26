@@ -26,6 +26,8 @@ class RichVersion(Version):
 
         self._parameters = json_payload.get('referenceParameters', {}) or {}
 
+        self._parentIds = json_payload.get('parentIds', None)
+
 
     @classmethod
     def from_rich_version(cls, _id, other_rich_version):
@@ -49,6 +51,9 @@ class RichVersion(Version):
     def get_parameters(self):
         return self._parameters
 
+    def get_parent_ids(self):
+        return self._parentIds
+
     def __eq__(self, other):
         return (
             isinstance(other, RichVersion)
@@ -57,4 +62,5 @@ class RichVersion(Version):
             and self._structure_version_id == other._structure_version_id
             and self._reference == other._reference
             and self._parameters == other._parameters
+            and self._parentIds == other.parentIds
         )

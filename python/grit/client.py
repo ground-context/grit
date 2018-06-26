@@ -445,10 +445,10 @@ class GroundClient(object):
     def get_edge_history(self, source_key):
         return gizzard.gitdag(source_key, 'edge')
 
-    def get_edge_version(self, id):
-        sourceKey = self._read_map_version_index(id)
+    def get_edge_version(self, evid):
+        sourceKey = self._read_map_version_index(evid)
         for commit, id in gizzard.get_ver_commits(sourceKey, 'edge'):
-            if id == int(id):
+            if id == int(evid):
                 with gizzard.chinto(os.path.join(globals.GRIT_D, 'edge', sourceKey)):
                     with gizzard.chkinto(commit):
                         readfiles = self._read_files(sourceKey, Edge.__name__, "ItemVersion")
@@ -517,10 +517,10 @@ class GroundClient(object):
     def get_node_history(self, source_key):
         return gizzard.gitdag(source_key, 'node')
 
-    def get_node_version(self, id):
-        sourceKey = self._read_map_version_index(id)
+    def get_node_version(self, nvid):
+        sourceKey = self._read_map_version_index(nvid)
         for commit, id in gizzard.get_ver_commits(sourceKey, 'node'):
-            if id == int(id):
+            if id == int(nvid):
                 with gizzard.chinto(os.path.join(globals.GRIT_D, 'node', sourceKey)):
                     with gizzard.chkinto(commit):
                         readfiles = self._read_files(sourceKey, Node.__name__, "ItemVersion")
@@ -761,10 +761,10 @@ class GroundClient(object):
     def get_lineage_edge_history(self, source_key):
         return gizzard.gitdag(source_key, 'lineage_edge')
 
-    def get_lineage_edge_version(self, id):
-        sourceKey = self._read_map_version_index(id)
+    def get_lineage_edge_version(self, levid):
+        sourceKey = self._read_map_version_index(levid)
         for commit, id in gizzard.get_ver_commits(sourceKey, 'lineage_edge'):
-            if id == int(id):
+            if id == int(levid):
                 with gizzard.chinto(os.path.join(globals.GRIT_D, 'lineage_edge', sourceKey)):
                     with gizzard.chkinto(commit):
                         readfiles = self._read_files(sourceKey, LineageEdge.__name__, "ItemVersion")
