@@ -377,6 +377,229 @@ class TestClient(unittest.TestCase):
         #     history == expected_history,
         #     "call to get_lineage_edge_history did not match expected value"
         # )
+    
+    def test_node_version_adjacent_lineage(self):
+        """
+        Tests getting the lineage edges for a node version
+        """
+        #create node versions
+        node1_source_key = uuid.uuid4().hex
+        node2_source_key = uuid.uuid4().hex
+        node3_source_key = uuid.uuid4().hex
+        node4_source_key = uuid.uuid4().hex
+
+        node1 = self.client.create_node(node1_source_key, node1_source_key)
+        node2 = self.client.create_node(node2_source_key, node2_source_key)
+        node3 = self.client.create_node(node3_source_key, node3_source_key)
+        node4 = self.client.create_node(node4_source_key, node4_source_key)
+
+        nv1 = self.client.create_node_version(node1.get_id())
+        nv2 = self.client.create_node_version(node2.get_id())
+        nv3 = self.client.create_node_version(node3.get_id())
+        nv4 = self.client.create_node_version(node4.get_id())
+
+        # Create the lineage edges
+        lin1_source_key = uuid.uuid4().hex
+        lin2_source_key = uuid.uuid4().hex
+
+        lin1 = self.client.create_lineage_edge(lin1_source_key, lin1_source_key)
+        lin2 = self.client.create_lineage_edge(lin2_source_key, lin2_source_key)
+
+        # Current State: NV(1) NV(2) NV(3) NV(4)
+        adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv2.get_id())
+
+        self.assertTrue(
+            adjacent_lineage_edges is None,
+            msg="get_node_version_adjacent_lineage with id={} should return None"
+            .format(nv2.get_id())
+        )
+
+        lv1 = self.client.create_lineage_edge_version(lin1.get_id(), nv3.get_id(), nv2.get_id())
+        lv2 = self.client.create_lineage_edge_version(lin2.get_id(), nv4.get_id(), nv3.get_id())
+
+        # Current State: NV(1)  NV(2) --LV(1)--> NV(3) --LV(2)--> NV(4)
+        adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv2.get_id())
+
+        self.assertTrue(
+            adjacent_lineage_edges is not None,
+            msg="get_node_version_adjacent_lineage with id = {} returned None instead of dictionary of adjacent lineage edges"
+            .format(nv2.get_id())
+        )
+
+        in_nvs = adjacent_lineage_edges["in"]
+        out_nvs = adjacent_lineage_edges["out"]
+
+        self.assertTrue(
+            in_nvs is None,
+            msg="there are no inward lineage edge versions to node version with id= = {}"
+            .format(nv2.get_id())
+        )
+        self.assertTrue(
+            out_nvs is not None,
+            msg="get_node_version_adjacent_lineage with id = {} returned no outward lineage edge versions"
+            .format(nv2.get_id())
+        )
+        self.assertTrue(
+            (len(out_nvs) == 1),
+            msg="there should only be one outward edge. Returned {} edges"
+            .format(len(out_nvs))
+        )
+        self.assertTrue(
+            (out_nvs[0] == self.client.get_node_version(nv3.get_id())),
+            msg="get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id ={}"
+            .format(nv2.get_id())
+            .format(out_nvs[0].get_id())
+            .format(nv3.get_id())
+        )
+
+        # Current State: NV(1)  NV(2) --LV(1)--> NV(3) --LV(2)--> NV(4)
+        adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv4.get_id())
+
+        self.assertTrue(
+            adjacent_lineage_edges is not None,
+            msg="get_node_version_adjacent_lineage with id = {} returned None instead of dictionary of adjacent lineage edges"
+            .format(nv4.get_id())
+        )
+
+        in_nvs = adjacent_lineage_edges["in"]
+        out_nvs = adjacent_lineage_edges["out"]
+
+        self.assertTrue(
+            in_nvs is not None,
+            msg="there are no inward lineage edge versions to node version with id = {}"
+            .format(nv2.get_id())
+        )
+        self.assertTrue(
+            (len(in_nvs) == 1),
+            msg="there should only be one inward edge. Returned {} edges"
+            .format(len(in_nvs))
+        )
+        self.assertTrue(
+            out_nvs is None,
+            msg="get_node_version_adjacent_lineage with id = {} returned no outward lineage edge versions"
+            .format(nv2.get_id())
+        )
+        self.assertTrue(
+            (in_nvs[0] == self.client.get_node_version(nv3.get_id())),
+            msg="get_node_version_adjacent_lineage with id = {} returned inward lineage edge with id = {} instead of id ={}"
+            .format(nv4.get_id())
+            .format(in_nvs[0].get_id())
+            .format(nv3.get_id())
+        )
+
+        # Current State: NV(1)  NV(2) --LV(1)--> NV(3) --LV(2)--> NV(4)
+        adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv3.get_id())
+
+        self.assertTrue(
+            adjacent_lineage_edges is not None,
+            msg="get_node_version_adjacent_lineage with id = {} returned None instead of dictionary of adjacent lineage edges"
+            .format(nv3.get_id())
+        )
+
+        in_nvs = adjacent_lineage_edges["in"]
+        out_nvs = adjacent_lineage_edges["out"]
+
+        self.assertTrue(
+            in_nvs is not None,
+            msg="get_node_version_adjacent_lineage with id = {} returned no inward lineage edge versions"
+            .format(nv3.get_id())
+        )
+        self.assertTrue(
+            (len(in_nvs) == 1),
+            msg="there should only be one inward edge. Returned {} edges"
+            .format(len(in_nvs))
+        )
+        self.assertTrue(
+            out_nvs is not None,
+            msg="get_node_version_adjacent_lineage with id = {} returned no outward lineage edge versions"
+            .format(nv3.get_id())
+        )
+        self.assertTrue(
+            (len(out_nvs) == 1),
+            msg="there should only be one outward edge. Returned {} edges"
+            .format(len(out_nvs))
+        )
+        self.assertTrue(
+            (in_nvs[0] == self.client.get_node_version(nv2.get_id())),
+            msg="get_node_version_adjacent_lineage with id = {} returned inward lineage edge with id = {} instead of id = {}"
+            .format(nv3.get_id())
+            .format(in_nvs[0].get_id())
+            .format(nv2.get_id())
+        )
+        self.assertTrue(
+            (out_nvs[0] == self.client.get_node_version(nv4.get_id())),
+            msg="get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id = {}"
+            .format(nv3.get_id())
+            .format(out_nvs[0].get_id())
+            .format(nv4.get_id())
+        )
+
+
+        node5_source_key = uuid.uuid4().hex
+        node6_source_key = uuid.uuid4().hex
+
+        node5 = self.client.create_node(node5_source_key, node5_source_key)
+        node6 = self.client.create_node(node6_source_key, node6_source_key)
+
+        nv5 = self.client.create_node_version(node5.get_id())
+        nv6 = self.client.create_node_version(node6.get_id())
+
+        lin3_source_key = uuid.uuid4().hex
+        lin4_source_key = uuid.uuid4().hex
+
+        lin3 = self.client.create_lineage_edge(lin3_source_key, lin3_source_key)
+        lin4 = self.client.create_lineage_edge(lin4_source_key, lin4_source_key)
+
+        lv3 = self.client.create_lineage_edge_version(lin3.get_id(), nv3.get_id(), nv5.get_id())
+        lv4 = self.client.create_lineage_edge_version(lin4.get_id(), nv6.get_id(), nv3.get_id())
+
+        # Current State: NV(1)  NV(2) --LV(1)--> NV(3) --LV(2)--> NV(4)
+        #                       NV(5) --LV(3)-->       --LV(4)--> NV(6)
+        adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv3.get_id())
+
+        self.assertTrue(
+            adjacent_lineage_edges is not None,
+            msg="get_node_version_adjacent_lineage with id = {} returned None instead of dictionary of adjacent lineage edges"
+            .format(nv3.get_id())
+        )
+
+        in_nvs = adjacent_lineage_edges["in"]
+        out_nvs = adjacent_lineage_edges["out"]
+
+        in_nvs_correct = (self.client.get_node_version(nv2.get_id()) in in_nvs) and (self.client.get_node_version(nv5.get_id()) in in_nvs)
+        out_nvs_correct = (self.client.get_node_version(nv4.get_id()) in out_nvs) and (self.client.get_node_version(nv6.get_id()) in out_nvs)
+
+        self.assertTrue(
+            in_nvs is not None,
+            msg="get_node_version_adjacent_lineage with id = {} returned no inward lineage edge versions"
+            .format(nv3.get_id())
+        )
+        self.assertTrue(
+            (len(in_nvs) == 2),
+            msg="there should only be one inward edge. Returned {} edges"
+            .format(len(in_nvs))
+        )
+        self.assertTrue(
+            out_nvs is not None,
+            msg="get_node_version_adjacent_lineage with id = {} returned no outward lineage edge versions"
+            .format(nv3.get_id())
+        )
+        self.assertTrue(
+            (len(out_nvs) == 2),
+            msg="there should only be one outward edge. Returned {} edges"
+            .format(len(out_nvs))
+        )
+        self.assertTrue(
+            (in_nvs_correct),
+            msg="get_node_version_adjacent_lineage with id = {} returned incorrect inward edges"
+            .format(nv3.get_id())
+        )
+        self.assertTrue(
+            (out_nvs_correct),
+            msg="get_node_version_adjacent_lineage with id = {} returned incorrect outward edges"
+            .format(nv3.get_id())
+        )        
+
 
     def test_lineage_graph(self):
         """
