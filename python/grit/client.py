@@ -528,18 +528,28 @@ class GroundClient(object):
                 return nv
         raise RuntimeError("Reached invalid line in getNodeVersion")
 
+    def filter(self, path, id):
+        with open(path, 'r') as f:
+            fileDict = json.load(f)
+            if 'ItemVersion' in fileDict:
+                if 'toRichVersionId' in fileDict['ItemVersion'] and \
+                        fileDict['ItemVersion']['toRichVersionId'] == id:
+                    return fileDict['Item']['id']
+                elif 'fromRichVersionId' in fileDict['ItemVersion'] and \
+                        fileDict['ItemVersion']['fromRichVersionId'] == id:
+                    return fileDict['Item']['id']
+        return None
+
     def get_node_version_adjacent_lineage(self, id):
         # All incoming and outgoing edges
         # Delaying implementation
-        lineageEdgeVersionMap = self._read_all_version_ever(LineageEdgeVersion.__name__)
-        lineageEdgeVersions = set(list(lineageEdgeVersionMap.keys()))
         adjacent = []
-        for levId in lineageEdgeVersions:
-            lev = lineageEdgeVersionMap[levId]
-            if ((id == lev['toRichVersionId']) or (id == lev['fromRichVersionId'])):
-                adjacent.append(lev)
-        return adjacent
 
+        route = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'])
+        for p in os.listdir(route):
+            folder = os.path.join(route, p)
+            adjacent.append(self.filter(os.path.join(folder, p + '.json'), id))
+        return adjacent
 
     ### GRAPHS ###
     def create_graph(self, source_key, name="null", tags=None):
