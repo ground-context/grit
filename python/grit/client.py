@@ -535,11 +535,21 @@ class GroundClient(object):
         adjacent['in'] = []
         adjacent['out'] = []
 
-        sourceKey = self._read_map_index(id)
-        route = os.path.join(self.path + self.cls2loc[className], sourceKey)
+        route = os.path.join(globals.GRIT_D, self.cls2loc['LineageEdgeVersion'], '.nodes', id)
+        if not os.path.exists(route):
+            return None
 
-        if adjacent['in'] == [] and adjacent['out'] == []:
-            adjacent = None
+        with gizzard.chinto(route):
+            if os.path.exists('in'):
+                adjacent['in'] = os.listdir('in')
+            else:
+                adjacent['in'] = None
+            if os.path.exists('out'):
+                adjacent['out'] = os.listdir('out')
+            else:
+                if adjacent['in'] == None:
+                    return None
+                adjacent['out'] = None
         return adjacent
 
     ### GRAPHS ###

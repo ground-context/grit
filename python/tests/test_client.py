@@ -406,15 +406,14 @@ class TestClient(unittest.TestCase):
         lin2 = self.client.create_lineage_edge(lin2_source_key, lin2_source_key)
 
         # Current State: NV(1) NV(2) NV(3) NV(4)
-        # adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv2.get_id())
-
-        #testing State: NV(2) --> NV(3)
-        lv1 = self.client.create_lineage_edge_version(lin1.get_id(), nv3.get_id(), nv2.get_id())
         adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv2.get_id())
 
-        print(adjacent_lineage_edges)
-        print("check for file")
-        input()
+        # #testing State: NV(2) --> NV(3)
+        # lv1 = self.client.create_lineage_edge_version(lin1.get_id(), nv3.get_id(), nv2.get_id())
+        # adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv2.get_id())
+
+        # print(adjacent_lineage_edges)
+
         self.assertTrue(
             adjacent_lineage_edges is None,
             msg="get_node_version_adjacent_lineage with id={} should return None"
@@ -436,6 +435,8 @@ class TestClient(unittest.TestCase):
         in_nvs = adjacent_lineage_edges["in"]
         out_nvs = adjacent_lineage_edges["out"]
 
+        print(in_nvs)
+        input()
         self.assertTrue(
             in_nvs is None,
             msg="there are no inward lineage edge versions to node version with id= = {}"
