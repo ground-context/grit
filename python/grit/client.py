@@ -539,8 +539,6 @@ class GroundClient(object):
         if not os.path.exists(route):
             return None
 
-        print(os.listdir('/home/eric/Research'))
-
         with gizzard.chinto(route):
             if os.path.exists('in'):
                 adjacent['in'] = os.listdir('in')
