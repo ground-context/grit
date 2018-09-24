@@ -480,7 +480,7 @@ class TestClient(unittest.TestCase):
             .format(nv2.get_id())
         )
         self.assertTrue(
-            (in_nvs[0] == self.client.get_node_version(nv3.get_id())),
+            (in_nvs[0].get_id() == nv3.get_id()),
             msg="get_node_version_adjacent_lineage with id = {} returned inward lineage edge with id = {} instead of id ={}"
             .format(nv4.get_id())
             .format(in_nvs[0].get_id())
@@ -520,14 +520,14 @@ class TestClient(unittest.TestCase):
             .format(len(out_nvs))
         )
         self.assertTrue(
-            (in_nvs[0] == self.client.get_node_version(nv2.get_id())),
+            (in_nvs[0].get_id() == nv2.get_id()),
             msg="get_node_version_adjacent_lineage with id = {} returned inward lineage edge with id = {} instead of id = {}"
             .format(nv3.get_id())
             .format(in_nvs[0].get_id())
             .format(nv2.get_id())
         )
         self.assertTrue(
-            (out_nvs[0] == self.client.get_node_version(nv4.get_id())),
+            (out_nvs[0].get_id() == nv4.get_id()),
             msg="get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id = {}"
             .format(nv3.get_id())
             .format(out_nvs[0].get_id())
@@ -564,10 +564,12 @@ class TestClient(unittest.TestCase):
         )
 
         in_nvs = adjacent_lineage_edges["in"]
+        in_nvs_ids = [in_nv.get_id() for in_nv in in_nvs]
         out_nvs = adjacent_lineage_edges["out"]
+        out_nvs_ids = [out_nv.get_id() for out_nv in out_nvs]
 
-        in_nvs_correct = (self.client.get_node_version(nv2.get_id()) in in_nvs) and (self.client.get_node_version(nv5.get_id()) in in_nvs)
-        out_nvs_correct = (self.client.get_node_version(nv4.get_id()) in out_nvs) and (self.client.get_node_version(nv6.get_id()) in out_nvs)
+        in_nvs_correct = (nv2.get_id() in in_nvs_ids) and (nv5.get_id() in in_nvs_ids)
+        out_nvs_correct = (nv4.get_id() in out_nvs_ids) and (nv6.get_id() in out_nvs_ids)
 
         self.assertTrue(
             in_nvs is not None,
