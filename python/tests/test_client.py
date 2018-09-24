@@ -429,17 +429,6 @@ class TestClient(unittest.TestCase):
         in_nvs = adjacent_lineage_edges["in"]
         out_nvs = adjacent_lineage_edges["out"]
 
-        print(in_nvs)
-        print(out_nvs)
-        print(out_nvs[0].get_id())
-        print(nv2.get_id())
-        print(nv3.get_id())
-        # print("get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id ={}"
-        #       .format(str(nv2.get_id()))
-        #       .format(out_nvs[0].get_id())
-        #       .format(nv3.get_id()))
-        input()
-
         self.assertTrue(
             in_nvs is None,
             msg="there are no inward lineage edge versions to node version with id= = {}"
