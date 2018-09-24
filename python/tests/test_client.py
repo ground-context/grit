@@ -408,12 +408,6 @@ class TestClient(unittest.TestCase):
         # Current State: NV(1) NV(2) NV(3) NV(4)
         adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv2.get_id())
 
-        # #testing State: NV(2) --> NV(3)
-        # lv1 = self.client.create_lineage_edge_version(lin1.get_id(), nv3.get_id(), nv2.get_id())
-        # adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv2.get_id())
-
-        # print(adjacent_lineage_edges)
-
         self.assertTrue(
             adjacent_lineage_edges is None,
             msg="get_node_version_adjacent_lineage with id={} should return None"
@@ -435,11 +429,6 @@ class TestClient(unittest.TestCase):
         in_nvs = adjacent_lineage_edges["in"]
         out_nvs = adjacent_lineage_edges["out"]
 
-        print(out_nvs)
-        print(nv2.get_id())
-        # print(out_nvs[0].get_id())
-        print(nv3.get_id())
-        input()
         self.assertTrue(
             in_nvs is None,
             msg="there are no inward lineage edge versions to node version with id= = {}"
@@ -456,7 +445,7 @@ class TestClient(unittest.TestCase):
             .format(len(out_nvs))
         )
         self.assertTrue(
-            (out_nvs[0] == self.client.get_node_version(nv3.get_id())),
+            (out_nvs[0].get_id() == nv3.get_id()),
             msg="get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id ={}"
             .format(nv2.get_id())
             .format(out_nvs[0].get_id())

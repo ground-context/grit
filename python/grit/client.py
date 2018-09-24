@@ -541,11 +541,13 @@ class GroundClient(object):
 
         with gizzard.chinto(route):
             if os.path.exists('in'):
-                adjacent['in'] = os.listdir('in')
+                ids = os.listdir('in')
+                adjacent['in'] = [self.get_node_version(id) for id in ids]
             else:
                 adjacent['in'] = None
             if os.path.exists('out'):
-                adjacent['out'] = os.listdir('out')
+                ids = os.listdir('out')
+                adjacent['out'] = [self.get_node_version(id) for id in ids]
             else:
                 if adjacent['in'] == None:
                     return None
@@ -753,14 +755,14 @@ class GroundClient(object):
         edge_loc = route = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'], sourceKey)
         in_dir = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'], ".nodes", to_rich_version_id, "in")
         from_dir = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'], ".nodes", from_rich_version_id, "out")
-        self.link_lineage(in_dir, edge_id, edge_loc)
-        self.link_lineage(from_dir, edge_id, edge_loc)
+        self.link_lineage(in_dir, from_rich_version_id, edge_loc)
+        self.link_lineage(from_dir, to_rich_version_id, edge_loc)
         return lineageEdgeVersion
 
-    def link_lineage(selfself, node_path, edge_id, edge_loc):
+    def link_lineage(selfself, node_path, node_id, edge_loc):
         if not os.path.exists(node_path):
             os.makedirs(node_path)
-        linked_path = os.path.join(node_path, edge_id)
+        linked_path = os.path.join(node_path, node_id)
         gizzard.linker(edge_loc, linked_path)
 
     def get_lineage_edge(self, source_key):
