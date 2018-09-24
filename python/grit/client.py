@@ -528,27 +528,18 @@ class GroundClient(object):
                 return nv
         raise RuntimeError("Reached invalid line in getNodeVersion")
 
-    def filter(self, path, id):
-        with open(path, 'r') as f:
-            fileDict = json.load(f)
-            if 'ItemVersion' in fileDict:
-                if 'toRichVersionId' in fileDict['ItemVersion'] and \
-                        fileDict['ItemVersion']['toRichVersionId'] == id:
-                    return fileDict['Item']['id']
-                elif 'fromRichVersionId' in fileDict['ItemVersion'] and \
-                        fileDict['ItemVersion']['fromRichVersionId'] == id:
-                    return fileDict['Item']['id']
-        return None
-
     def get_node_version_adjacent_lineage(self, id):
         # All incoming and outgoing edges
         # Delaying implementation
-        adjacent = []
+        adjacent = {}
+        adjacent['in'] = []
+        adjacent['out'] = []
 
-        route = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'])
-        for p in os.listdir(route):
-            folder = os.path.join(route, p)
-            adjacent.append(self.filter(os.path.join(folder, p + '.json'), id))
+        sourceKey = self._read_map_index(id)
+        route = os.path.join(self.path + self.cls2loc[className], sourceKey)
+
+        if adjacent['in'] == [] and adjacent['out'] == []:
+            adjacent = None
         return adjacent
 
     ### GRAPHS ###
@@ -749,7 +740,18 @@ class GroundClient(object):
         self._write_files(sourceKey, write, LineageEdgeVersion.__name__)
         self._map_version_index(lineageEdgeVersionId, sourceKey)
 
+        edge_loc = route = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'], sourceKey)
+        in_dir = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'], ".nodes", to_rich_version_id, "in")
+        from_dir = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'], ".nodes", from_rich_version_id, "out")
+        self.link_lineage(in_dir, edge_id, edge_loc)
+        self.link_lineage(from_dir, edge_id, edge_loc)
         return lineageEdgeVersion
+
+    def link_lineage(selfself, node_path, edge_id, edge_loc):
+        if not os.path.exists(node_path):
+            os.makedirs(node_path)
+        linked_path = os.path.join(node_path, edge_id)
+        gizzard.linker(edge_loc, linked_path)
 
     def get_lineage_edge(self, source_key):
         if not self._find_file(source_key, LineageEdge.__name__):

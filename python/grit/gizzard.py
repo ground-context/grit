@@ -143,6 +143,10 @@ def new_branch_name(sourceKey, typ):
 
     return new_name
 
+def linker(path, link_path):
+    __runProc__(['ln', '-s', path, link_path])
+
+
 def __runProc__(commands: List):
     subprocess.run(commands, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL)
