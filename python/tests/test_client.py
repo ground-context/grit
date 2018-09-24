@@ -429,6 +429,17 @@ class TestClient(unittest.TestCase):
         in_nvs = adjacent_lineage_edges["in"]
         out_nvs = adjacent_lineage_edges["out"]
 
+        print(in_nvs)
+        print(out_nvs)
+        print(out_nvs[0].get_id())
+        print(nv2.get_id())
+        print(nv3.get_id())
+        # print("get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id ={}"
+        #       .format(str(nv2.get_id()))
+        #       .format(out_nvs[0].get_id())
+        #       .format(nv3.get_id()))
+        input()
+
         self.assertTrue(
             in_nvs is None,
             msg="there are no inward lineage edge versions to node version with id= = {}"
@@ -444,13 +455,14 @@ class TestClient(unittest.TestCase):
             msg="there should only be one outward edge. Returned {} edges"
             .format(len(out_nvs))
         )
-        self.assertTrue(
-            (out_nvs[0].get_id() == nv3.get_id()),
-            msg="get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id ={}"
-            .format(nv2.get_id())
-            .format(out_nvs[0].get_id())
-            .format(nv3.get_id())
-        )
+        assert(out_nvs[0].get_id() == nv3.get_id())
+        # self.assertTrue(
+        #     (out_nvs[0].get_id() == nv3.get_id()),
+        #     msg="get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id ={}"
+        #     .format(str(nv2.get_id()))
+        #     .format(out_nvs[0].get_id())
+        #     .format(nv3.get_id())
+        # )
 
         # Current State: NV(1)  NV(2) --LV(1)--> NV(3) --LV(2)--> NV(4)
         adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv4.get_id())
@@ -479,13 +491,14 @@ class TestClient(unittest.TestCase):
             msg="get_node_version_adjacent_lineage with id = {} returned no outward lineage edge versions"
             .format(nv2.get_id())
         )
-        self.assertTrue(
-            (in_nvs[0].get_id() == nv3.get_id()),
-            msg="get_node_version_adjacent_lineage with id = {} returned inward lineage edge with id = {} instead of id ={}"
-            .format(nv4.get_id())
-            .format(in_nvs[0].get_id())
-            .format(nv3.get_id())
-        )
+        assert(in_nvs[0].get_id() == nv3.get_id())
+        # self.assertTrue(
+        #     (in_nvs[0].get_id() == nv3.get_id()),
+        #     msg="get_node_version_adjacent_lineage with id = {} returned inward lineage edge with id = {} instead of id ={}"
+        #     .format(nv4.get_id())
+        #     .format(in_nvs[0].get_id())
+        #     .format(nv3.get_id())
+        # )
 
         # Current State: NV(1)  NV(2) --LV(1)--> NV(3) --LV(2)--> NV(4)
         adjacent_lineage_edges = self.client.get_node_version_adjacent_lineage(nv3.get_id())
@@ -519,20 +532,22 @@ class TestClient(unittest.TestCase):
             msg="there should only be one outward edge. Returned {} edges"
             .format(len(out_nvs))
         )
-        self.assertTrue(
-            (in_nvs[0].get_id() == nv2.get_id()),
-            msg="get_node_version_adjacent_lineage with id = {} returned inward lineage edge with id = {} instead of id = {}"
-            .format(nv3.get_id())
-            .format(in_nvs[0].get_id())
-            .format(nv2.get_id())
-        )
-        self.assertTrue(
-            (out_nvs[0].get_id() == nv4.get_id()),
-            msg="get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id = {}"
-            .format(nv3.get_id())
-            .format(out_nvs[0].get_id())
-            .format(nv4.get_id())
-        )
+        assert(in_nvs[0].get_id() == nv2.get_id())
+        # self.assertTrue(
+        #     (in_nvs[0].get_id() == nv2.get_id()),
+        #     msg="get_node_version_adjacent_lineage with id = {} returned inward lineage edge with id = {} instead of id = {}"
+        #     .format(nv3.get_id())
+        #     .format(in_nvs[0].get_id())
+        #     .format(nv2.get_id())
+        # )
+        assert(out_nvs[0].get_id() == nv4.get_id())
+        # self.assertTrue(
+        #     (out_nvs[0].get_id() == nv4.get_id()),
+        #     msg="get_node_version_adjacent_lineage with id = {} returned outward lineage edge with id = {} instead of id = {}"
+        #     .format(nv3.get_id())
+        #     .format(out_nvs[0].get_id())
+        #     .format(nv4.get_id())
+        # )
 
 
         node5_source_key = uuid.uuid4().hex
