@@ -435,7 +435,10 @@ class TestClient(unittest.TestCase):
         in_nvs = adjacent_lineage_edges["in"]
         out_nvs = adjacent_lineage_edges["out"]
 
-        print(in_nvs)
+        print(out_nvs)
+        print(nv2.get_id())
+        # print(out_nvs[0].get_id())
+        print(nv3.get_id())
         input()
         self.assertTrue(
             in_nvs is None,
