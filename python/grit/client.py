@@ -535,7 +535,7 @@ class GroundClient(object):
         adjacent['in'] = []
         adjacent['out'] = []
 
-        route = os.path.join(globals.GRIT_D, self.cls2loc['LineageEdgeVersion'], '.nodes', id)
+        route = os.path.join(globals.GRIT_D, 'index', '.nodes', id)
         if not os.path.exists(route):
             return None
 
@@ -753,8 +753,8 @@ class GroundClient(object):
         self._map_version_index(lineageEdgeVersionId, sourceKey)
 
         edge_loc = route = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'], sourceKey)
-        in_dir = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'], ".nodes", to_rich_version_id, "in")
-        from_dir = os.path.join(self.path + self.cls2loc['LineageEdgeVersion'], ".nodes", from_rich_version_id, "out")
+        in_dir = os.path.join(self.path, 'index', ".nodes", to_rich_version_id, "in")
+        from_dir = os.path.join(self.path, 'index', ".nodes", from_rich_version_id, "out")
         self.link_lineage(in_dir, from_rich_version_id, edge_loc)
         self.link_lineage(from_dir, to_rich_version_id, edge_loc)
         return lineageEdgeVersion
